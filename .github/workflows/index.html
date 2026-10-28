@@ -1,0 +1,2347 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>NEW LIFE Mobile</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Layout: one-screen app shell — sticky header, scrolling workspace, bottom tab bar (thumb reach) */
+:root{
+  --bg:#f2f5f3; --surface:#ffffff; --sunken:#e6ece8; --line:#d3ddd7;
+  --fg:#15211c; --muted:#5b6b63; --accent:#0d7a62; --accent-fg:#ffffff; --accent-soft:#d6efe7;
+  --danger:#b4232c; --page-shadow:0 1px 3px rgba(16,40,30,.18);
+  --f-display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1412; --surface:#16201d; --sunken:#1d2a26; --line:#2b3a35;
+  --fg:#e6efeb; --muted:#97a9a1; --accent:#3cc3a3; --accent-fg:#06130f; --accent-soft:#163b31;
+  --danger:#ff6b72; --page-shadow:0 1px 4px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1412; --surface:#16201d; --sunken:#1d2a26; --line:#2b3a35;
+  --fg:#e6efeb; --muted:#97a9a1; --accent:#3cc3a3; --accent-fg:#06130f; --accent-soft:#163b31;
+  --danger:#ff6b72; --page-shadow:0 1px 4px rgba(0,0,0,.6); color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{direction:rtl;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  display:flex;flex-direction:column;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-block:10px;display:flex;align-items:center;gap:12px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.06em;white-space:nowrap}
+.brand b{color:var(--accent);font-weight:700}
+.top .sub{color:var(--muted);font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+
+main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+section.view{padding-block:16px 24px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--f-display);font-weight:700;font-size:26px;line-height:1.25;margin:0;text-wrap:balance}
+h2{font-size:16px;font-weight:600;margin:0}
+.lead{color:var(--muted);margin:0;max-width:60ch}
+
+nav.tabs{display:flex;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs button{flex:1;border:0;background:none;padding:8px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;
+  color:var(--muted);font-size:12px;font-weight:500}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-selected="true"]{color:var(--accent)}
+nav.tabs button[aria-selected="true"] .ic{background:var(--accent-soft)}
+nav.tabs .ic{display:grid;place-items:center;width:52px;height:30px;border-radius:15px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:start;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:14px;min-height:96px}
+.tile svg{width:26px;height:26px;color:var(--accent)}
+.tile strong{font-weight:600;font-size:15px}
+.tile span{color:var(--muted);font-size:12.5px;line-height:1.4}
+.tile:active{background:var(--sunken)}
+.note{font-size:13px;color:var(--muted);border-inline-start:3px solid var(--accent);padding:4px 10px;margin:0}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;display:inline-flex;align-items:center;gap:6px;
+  font-weight:500;min-height:40px;white-space:nowrap}
+.btn svg{width:18px;height:18px}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.scrollrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.scrollrow::-webkit-scrollbar{display:none}
+
+/* PDF workspace */
+.docbar{position:sticky;top:0;z-index:4;background:var(--bg);padding-block:10px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line)}
+.docmeta{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.docmeta strong{color:var(--fg);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pages{display:flex;flex-direction:column;gap:18px;padding-block:16px 120px;align-items:center}
+.pg{position:relative;width:100%;max-width:820px}
+.pg .sheet{position:relative;background:#fff;box-shadow:var(--page-shadow);border-radius:3px;overflow:hidden;width:100%;touch-action:pan-y}
+.pg canvas{display:block;width:100%;height:auto}
+.pg .ph{width:100%;background:var(--sunken)}
+.pg .cap{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pg .pick{display:flex;align-items:center;gap:6px}
+.pg .pick input{width:20px;height:20px;accent-color:var(--accent)}
+.pg.selected .sheet{outline:3px solid var(--accent);outline-offset:2px}
+.placing .sheet{cursor:crosshair}
+.ov{position:absolute;border:1.5px dashed var(--accent);touch-action:none}
+.ov img{width:100%;height:100%;display:block;pointer-events:none}
+.ov .x,.ov .rs{position:absolute;width:26px;height:26px;border-radius:13px;background:var(--accent);color:var(--accent-fg);border:0;
+  display:grid;place-items:center;font-size:15px;line-height:1;padding:0}
+.ov .x{top:-13px;left:-13px}
+.ov .rs{bottom:-13px;right:-13px;cursor:nwse-resize;touch-action:none}
+
+.floatbar{position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:6;display:flex;justify-content:center;pointer-events:none}
+.floatbar>div{pointer-events:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.18);
+  padding:8px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 32px)}
+.floatbar .lbl{align-self:center;font-size:13px;color:var(--muted);padding-inline:6px}
+
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:40px 8px;color:var(--muted)}
+.empty svg{width:64px;height:64px;color:var(--accent)}
+
+/* Text workspace */
+.pane{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.pane header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pane .tag{font-size:12px;color:var(--muted)}
+textarea{width:100%;min-height:180px;resize:vertical;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px 12px;line-height:1.7;font-size:16px}
+select,input[type=text],input[type=number]{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;min-height:40px;max-width:100%}
+.status{font-size:13px;color:var(--muted);min-height:1.2em}
+
+/* Sheets / dialogs */
+.scrim{position:fixed;inset:0;background:rgba(5,15,11,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheetdlg{background:var(--surface);width:100%;max-width:640px;border-radius:18px 18px 0 0;max-height:88%;overflow:auto;
+  padding-block:16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.sheetdlg .grab{width:42px;height:5px;border-radius:3px;background:var(--line);align-self:center}
+.sheetdlg .acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.toolgrid button{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:start;border:1px solid var(--line);
+  background:var(--bg);border-radius:12px;padding:10px 12px;min-height:72px}
+.toolgrid button svg{width:22px;height:22px;color:var(--accent)}
+.toolgrid button small{color:var(--muted);font-size:11.5px;line-height:1.35}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.field>*:not(span){color:var(--fg)}
+.pad{background:#fff;border:1px dashed var(--line);border-radius:12px;width:100%;height:200px;touch-action:none;display:block}
+.swatches{display:flex;gap:8px}
+.swatches button{width:34px;height:34px;border-radius:17px;border:2px solid var(--line)}
+.swatches button[aria-pressed="true"]{border-color:var(--fg)}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top,0px));z-index:30;background:var(--fg);color:var(--bg);
+  padding:10px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.busy{position:fixed;inset:0;z-index:40;background:rgba(5,15,11,.5);display:grid;place-items:center}
+.busy div{background:var(--surface);border-radius:14px;padding:18px 22px;display:flex;gap:12px;align-items:center;max-width:80%}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ov.on{border-style:solid;box-shadow:0 0 0 3px var(--accent-soft)}
+.ov:not(.on) .x,.ov:not(.on) .rs,.ov:not(.on) .rt{display:none}
+.ov .rt{position:absolute;width:26px;height:26px;border-radius:13px;background:var(--accent);color:var(--accent-fg);border:0;display:grid;place-items:center;font-size:15px;padding:0;
+  top:-34px;left:50%;margin-left:-13px;touch-action:none;cursor:grab}
+.segs{display:flex;background:var(--sunken);border-radius:12px;padding:3px;gap:3px}
+.segs button{flex:1;border:0;background:none;border-radius:9px;padding:8px 4px;font-weight:500;font-size:14px;color:var(--muted)}
+.segs button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.sigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.sigitem{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:12px;height:76px;display:grid;place-items:center;padding:8px}
+.sigitem img{max-height:100%;max-width:100%}
+.sigitem.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sigitem .x{position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:12px;border:0;background:var(--sunken);color:var(--fg);padding:0}
+.fonts{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.fonts button{background:#fff;border:1.5px solid var(--line);border-radius:12px;min-height:70px;font-size:30px;line-height:1.2;padding:6px;overflow:hidden}
+.fonts button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sigprev{background:#fff;border:1px dashed var(--line);border-radius:12px;min-height:90px;display:grid;place-items:center;color:#666;padding:8px}
+.sigprev img{max-height:120px}
+input[type=range]{accent-color:var(--accent);width:100%}
+/* Office */
+.wbar{position:sticky;top:0;z-index:3;background:var(--bg);padding-block:8px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line)}
+.tb{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tb::-webkit-scrollbar{display:none}
+.tb button{min-width:40px;height:40px;border:1px solid var(--line);background:var(--surface);border-radius:9px;font-weight:600;padding:0 8px;white-space:nowrap}
+.paper{background:#fff;color:#111;box-shadow:var(--page-shadow);border-radius:3px;padding:28px 22px;min-height:60vh;line-height:1.7;font-size:16px;outline:none;overflow-wrap:anywhere}
+.paper img{max-width:100%;height:auto}
+.paper table{border-collapse:collapse;width:100%;margin:8px 0}
+.paper td,.paper th{border:1px solid #999;padding:4px 6px;min-width:40px}
+.paper h1{font-size:24px;margin:.4em 0}.paper h2{font-size:20px;margin:.4em 0}
+.gridwrap{overflow:auto;max-height:65vh;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+#grid{border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+#grid th{position:sticky;background:var(--sunken);color:var(--muted);font-weight:500;padding:4px 8px;border:1px solid var(--line);z-index:1}
+#grid thead th{top:0}
+#grid tbody th{right:0}
+#grid td{border:1px solid var(--line);padding:6px 8px;min-width:84px;max-width:240px;white-space:pre-wrap;outline:none}
+#grid td.n{text-align:left;direction:ltr}
+#grid td:focus{box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+#sheetTabs{display:flex;gap:6px;overflow-x:auto}
+#sheetTabs button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;white-space:nowrap}
+#sheetTabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.slides{display:flex;flex-direction:column;gap:16px}
+.slide canvas{width:100%;height:auto;display:block;box-shadow:var(--page-shadow);border-radius:3px;background:#fff}
+.slide .cap{margin-top:6px;font-size:12.5px;color:var(--muted)}
+/* Scanner */
+.scanpgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.scanpg canvas{width:100%;height:auto;display:block;background:#fff;box-shadow:var(--page-shadow);border-radius:3px}
+.scanpg .cap{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:13px;color:var(--muted)}
+.mini{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0}
+.crop{position:fixed;inset:0;z-index:25;background:#0b0f0e;color:#f2f5f3;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.crop .btn{background:#1c2422;border-color:#2e3936;color:#f2f5f3}
+.crop .btn.primary{background:#3cc3a3;border-color:#3cc3a3;color:#06130f}
+.crop .btn[aria-pressed="true"]{background:#3cc3a3;color:#06130f;border-color:#3cc3a3}
+.crop-top{display:flex;justify-content:space-between;align-items:center;padding-block:10px}
+.crop-stage{flex:1;position:relative;display:grid;place-items:center;min-height:0}
+.crop-stage canvas,.crop-stage svg{grid-area:1/1}
+.crop-stage svg{touch-action:none;overflow:visible}
+.qpoly{fill:rgba(60,195,163,.18);stroke:#3cc3a3;stroke-width:2}
+.qpt{fill:rgba(60,195,163,.35);stroke:#fff;stroke-width:3;cursor:grab}
+.crop-bottom{padding-block:10px;display:flex;flex-direction:column;gap:6px}
+.crop-hint{font-size:12.5px;color:#9fb0aa;text-align:center}
+.bcres{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px}
+.bctext{font-size:17px;font-weight:500;overflow-wrap:anywhere;user-select:text}
+.chip{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:12px;padding:2px 10px;border-radius:20px}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:14px;border-top:1px solid var(--line);padding-top:6px}
+.kv span{color:var(--muted)}
+.big{display:flex;gap:10px}
+.big .btn{flex:1;min-height:56px;justify-content:center;font-size:16px}
+/* التابلت والشاشات العريضة */
+@media (min-width: 720px) {
+  main > section.view { max-width: 1120px; margin-inline: auto; width: 100%; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .tile { min-height: 120px; padding: 18px; }
+  h1 { font-size: 32px; }
+  nav.tabs { justify-content: center; }
+  nav.tabs button { flex: 0 1 150px; font-size: 13px; }
+  .scrim { align-items: center; }
+  .sheetdlg { max-width: 720px; border-radius: 18px; }
+  .floatbar > div { max-width: 760px; }
+  .paper { max-width: 860px; width: 100%; margin-inline: auto; padding: 48px 56px; }
+  #v-text:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+  #v-text textarea { min-height: 52vh; }
+  .scanpgs { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .slides { max-width: 900px; margin-inline: auto; width: 100%; }
+}
+@media (min-width: 1100px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+
+</style>
+
+<header class="top gut">
+  <div class="brand">NEW <b>LIFE</b></div>
+  <div class="sub" id="topSub">مستنداتك ونصوصك على الهاتف</div>
+</header>
+
+<main id="main">
+  <!-- الرئيسية -->
+  <section class="view gut" id="v-home" data-view="home">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h1>ماذا تريد أن تنجز اليوم؟</h1>
+      <p class="lead">افتح ملف PDF وعدّله، أو صوّر ورقة واستخرج نصها، أو ترجم نصاً واسمعه بصوت.</p>
+    </div>
+    <div class="grid">
+      <button class="tile" data-act="openPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M9 17h4"/></svg><strong>فتح ملف PDF</strong><span>عرض، توقيع، كتابة، تدوير وحذف الصفحات</span></button>
+      <button class="tile" data-act="imagesToPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/></svg><strong>صور إلى PDF</strong><span>صوّر الأوراق أو اختر صوراً واجمعها في ملف</span></button>
+      <button class="tile" data-act="mergePdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3h8v6H8zM8 15h8v6H8z"/><path d="M12 9v6"/></svg><strong>دمج ملفات PDF</strong><span>اختر عدة ملفات لتصبح ملفاً واحداً</span></button>
+      <button class="tile" data-act="openOffice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg><strong>Word و Excel و PowerPoint</strong><span>افتح وعدّل واحفظ ملفات Office</span></button>
+      <button class="tile" data-act="goScan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 8h8v8H8z"/></svg><strong>ماسح المستندات</strong><span>صوّر العقود والأوراق بقصّ وتحسين تلقائي</span></button>
+      <button class="tile" data-act="goBarcode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5v14M7 5v14M10 5v14M14 5v14M16 5v14M20 5v14"/></svg><strong>قراءة الباركود</strong><span>QR وباركود المنتجات وكل الأنواع</span></button>
+      <button class="tile" data-act="ocrImage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><path d="M8 9h8M8 12h8M8 15h5"/></svg><strong>نص من صورة</strong><span>استخراج النص العربي والإنجليزي من صورة</span></button>
+      <button class="tile" data-act="goTranslate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h9M8.5 3v2M6 5c0 4 3 7 6 8M11 5c0 4-3 7-7 8"/><path d="m13 21 4-9 4 9M14.5 18h5"/></svg><strong>ترجمة نص</strong><span>بين العربية والإنجليزية ولغات أخرى</span></button>
+      <button class="tile" data-act="goSpeak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg><strong>قراءة النص بصوت</strong><span>يقرأ الهاتف النص بالعربية أو الإنجليزية</span></button>
+    </div>
+    <div class="pane" id="diag">
+      <header><h2>فحص البرنامج</h2><button class="btn" data-act="diagRun">إعادة الفحص</button></header>
+      <div id="diagList" style="display:flex;flex-direction:column;gap:6px;font-size:14px"></div>
+      <label class="btn" for="fTest" style="align-self:flex-start">اختبار فتح ملف من الهاتف</label>
+      <input type="file" id="fTest" class="sr">
+      <div class="status" id="diagFile"></div>
+    </div>
+    <p class="note">الملفات تُعالج داخل هاتفك. استخراج النص من الصور والترجمة فقط يستعينان بـ Claude من حسابك.</p>
+  </section>
+
+  <!-- PDF -->
+  <section class="view" id="v-pdf" data-view="pdf" hidden style="padding-top:0;gap:0">
+    <div class="docbar gut">
+      <div class="docmeta"><strong id="docName">—</strong><span id="docInfo"></span></div>
+      <div class="scrollrow">
+        <button class="btn" data-act="openPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h6l2 2h10v10H3z"/></svg>فتح</button>
+        <button class="btn primary" data-act="savePdf" id="bSave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>حفظ</button>
+        <button class="btn" data-act="tools"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>أدوات</button>
+        <button class="btn" data-act="addText"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg>نص</button>
+        <button class="btn" data-act="signature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17c3-6 5-10 7-10s-1 9 2 9 3-5 5-5 1 4 4 4"/><path d="M3 21h18"/></svg>توقيع</button>
+        <button class="btn" data-act="undo" id="bUndo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>تراجع</button>
+      </div>
+    </div>
+    <div class="pages gut" id="pages"></div>
+  </section>
+
+  <!-- Office -->
+  <section class="view" id="v-office" data-view="office" hidden style="padding-top:0;gap:0">
+    <div class="wbar gut">
+      <div class="docmeta"><strong id="ofName">Word · Excel · PowerPoint</strong></div>
+      <div class="scrollrow">
+        <button class="btn" data-act="openOffice">فتح ملف</button>
+        <button class="btn" data-act="newWord">مستند Word جديد</button>
+        <button class="btn" data-act="newExcel">جدول Excel جديد</button>
+      </div>
+    </div>
+    <div class="gut" style="padding-block:14px 120px;display:flex;flex-direction:column;gap:12px">
+      <div id="of-none" class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>
+        <div>افتح ملف Word (docx) أو Excel (xlsx، xls، csv) أو PowerPoint (pptx)</div><button class="btn primary" data-act="openOffice">فتح ملف</button></div>
+      <div id="of-word" hidden style="display:flex;flex-direction:column;gap:10px">
+        <div class="tb" role="toolbar" aria-label="تنسيق">
+          <button data-act="wUndo" aria-label="تراجع">↶</button><button data-act="wRedo" aria-label="إعادة">↷</button>
+          <button data-act="wB"><b>B</b></button><button data-act="wI"><i>I</i></button><button data-act="wU"><u>U</u></button>
+          <button data-act="wH1">عنوان</button><button data-act="wH2">عنوان فرعي</button><button data-act="wP">عادي</button>
+          <button data-act="wBig">A+</button><button data-act="wSmall">A−</button>
+          <button data-act="wR">يمين</button><button data-act="wC">وسط</button><button data-act="wL">يسار</button>
+          <button data-act="wUL">• قائمة</button><button data-act="wOL">1. قائمة</button>
+          <button data-act="wBlack" aria-label="أسود"><span style="color:#111">●</span></button><button data-act="wBlue" aria-label="أزرق"><span style="color:#1d4ed8">●</span></button><button data-act="wRed" aria-label="أحمر"><span style="color:#b91c1c">●</span></button>
+          <button data-act="wTable">جدول</button><button data-act="wImg">صورة</button>
+        </div>
+        <div id="wordEd" class="paper" contenteditable="true" dir="auto" spellcheck="true"></div>
+        <div class="row"><button class="btn primary" data-act="saveWord">حفظ</button><button class="btn" data-act="wordToText">إلى قسم النصوص</button></div>
+      </div>
+      <div id="of-excel" hidden style="display:flex;flex-direction:column;gap:10px">
+        <div id="sheetTabs"></div>
+        <div class="docmeta"><span id="gridInfo"></span><span>اضغط على أي خلية لتعديلها</span></div>
+        <div class="gridwrap"><table id="grid"></table></div>
+        <div class="row"><button class="btn" id="gridMore" data-act="gridMore" hidden>عرض صفوف أكثر</button>
+          <button class="btn primary" data-act="saveExcel">حفظ</button><button class="btn" data-act="gridAddRow">+ صف</button><button class="btn" data-act="gridAddCol">+ عمود</button></div>
+      </div>
+      <div id="of-ppt" hidden style="display:flex;flex-direction:column;gap:10px">
+        <p class="note">عرض الشرائح للقراءة. الحركات والتأثيرات وبعض الأشكال لا تظهر.</p>
+        <div class="row"><button class="btn primary" data-act="pptPdf">حفظ كـ PDF</button><button class="btn" data-act="pptOpenPdf">فتح في محرر PDF</button><button class="btn" data-act="pptText">النص إلى قسم النصوص</button></div>
+        <div class="slides" id="slides"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- الماسح -->
+  <section class="view gut" id="v-scan" data-view="scan" hidden>
+    <div class="segs" id="scanSeg" role="tablist"><button data-m="doc" aria-selected="true">مسح مستند</button><button data-m="bc" aria-selected="false">قراءة باركود</button></div>
+    <div id="sc-doc" style="display:flex;flex-direction:column;gap:14px">
+      <div class="big"><button class="btn primary" data-act="scanCam">📷 تصوير صفحة</button><button class="btn" data-act="scanGal">🖼 من المعرض</button></div>
+      <p class="lead" id="scanEmpty">ضع الورقة على سطح داكن وصوّرها من الأعلى. يقصّ البرنامج حوافها ويعدّل ميلها ويحسّن وضوحها، ثم تجمع كل الصفحات في ملف PDF واحد.</p>
+      <div class="scanpgs" id="scanPages"></div>
+      <div id="scanActs" hidden style="display:flex;flex-direction:column;gap:8px">
+        <div class="row"><button class="btn primary" data-act="scanSave">حفظ PDF</button><button class="btn" data-act="scanToEditor">فتح للتوقيع والتعديل</button>
+        <button class="btn" data-act="scanOcr">استخراج النص</button><button class="btn" data-act="scanImages">حفظ كصور</button><button class="btn danger" data-act="scanClear">بدء من جديد</button></div>
+      </div>
+    </div>
+    <div id="sc-bc" hidden style="display:flex;flex-direction:column;gap:14px">
+      <div class="big"><button class="btn primary" data-act="bcCam">📷 صوّر الباركود</button><button class="btn" data-act="bcGal">🖼 من صورة</button></div>
+      <p class="lead">يقرأ QR وباركود المنتجات (EAN، UPC) وCode 128 وCode 39 وData Matrix وPDF417 وغيرها. اجعل الباركود في وسط الصورة وواضحاً.</p>
+      <div id="bcNow" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="bcHistWrap" hidden style="display:flex;flex-direction:column;gap:10px"><div class="row" style="justify-content:space-between"><h2>السجل</h2><button class="btn" data-act="bcClear">مسح السجل</button></div><div id="bcHist" style="display:flex;flex-direction:column;gap:10px"></div></div>
+    </div>
+  </section>
+
+  <!-- النصوص -->
+  <section class="view gut" id="v-text" data-view="text" hidden>
+    <div class="pane">
+      <header><h2>النص</h2><span class="tag" id="srcTag">مثال للتجربة — اكتب أو الصق نصك</span></header>
+      <textarea id="srcText" dir="auto" aria-label="النص"></textarea>
+      <div class="scrollrow">
+        <button class="btn" data-act="ocrImage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="3.2"/><path d="M8 6l1.5-2h5L16 6"/></svg>من صورة</button>
+        <button class="btn" data-act="textFromPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>من PDF</button>
+        <button class="btn" data-act="speakSrc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>استماع</button>
+        <button class="btn" data-act="copySrc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>نسخ</button>
+        <button class="btn" data-act="saveSrc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>حفظ</button>
+        <button class="btn danger" data-act="clearSrc">مسح</button>
+      </div>
+      <div class="status" id="srcStatus"></div>
+    </div>
+    <div class="pane" id="trPane">
+      <header><h2>الترجمة</h2>
+        <label class="row" style="gap:6px"><span class="tag">إلى</span>
+          <select id="trLang" aria-label="لغة الترجمة"></select></label></header>
+      <div class="row">
+        <button class="btn primary" data-act="translate" id="bTranslate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h9M8.5 3v2M6 5c0 4 3 7 6 8M11 5c0 4-3 7-7 8"/><path d="m13 21 4-9 4 9M14.5 18h5"/></svg>ترجم</button>
+        <button class="btn" data-act="stopTr" id="bStopTr" hidden>إيقاف</button>
+      </div>
+      <textarea id="outText" dir="auto" aria-label="الترجمة" placeholder="ستظهر الترجمة هنا"></textarea>
+      <div class="scrollrow">
+        <button class="btn" data-act="speakOut">استماع</button>
+        <button class="btn" data-act="copyOut">نسخ</button>
+        <button class="btn" data-act="saveOut">حفظ</button>
+        <button class="btn" data-act="swap">تبديل مع النص</button>
+      </div>
+      <div class="status" id="trStatus"></div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabs" role="tablist" aria-label="الأقسام">
+  <button role="tab" data-tab="home" aria-selected="true"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/></svg></span>الرئيسية</button>
+  <button role="tab" data-tab="pdf" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span>PDF</button>
+  <button role="tab" data-tab="office" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg></span>Office</button>
+  <button role="tab" data-tab="scan" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg></span>الماسح</button>
+  <button role="tab" data-tab="text" aria-selected="false"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 6h14M5 10h14M5 14h9M5 18h6"/></svg></span>النصوص</button>
+</nav>
+
+<div class="floatbar" id="selBar" hidden><div>
+  <span class="lbl" id="selCount"></span>
+  <button class="btn" data-act="rotSel">تدوير</button>
+  <button class="btn" data-act="upSel">↑ لأعلى</button>
+  <button class="btn" data-act="downSel">↓ لأسفل</button>
+  <button class="btn" data-act="extractSel">حفظ كملف</button>
+  <button class="btn danger" data-act="delSel">حذف</button>
+  <button class="btn" data-act="clearSel">إلغاء</button>
+</div></div>
+<div class="floatbar" id="ovBar" hidden><div>
+  <span class="lbl" id="ovHint"></span>
+  <button class="btn" data-act="ovEdit" id="bOvEdit" hidden>تعديل النص</button>
+  <button class="btn" data-act="ovAll" id="bOvAll" hidden>على كل الصفحات</button>
+  <button class="btn" data-act="ovDate" id="bOvDate" hidden>+ التاريخ</button>
+  <button class="btn primary" data-act="applyOv">تثبيت في الملف</button>
+  <button class="btn" data-act="cancelOv">إلغاء</button>
+</div></div>
+
+<input type="file" id="fPdf" accept="application/pdf,.pdf" class="sr">
+<input type="file" id="fMerge" accept="application/pdf,.pdf,image/*" multiple class="sr">
+<input type="file" id="fImgs" accept="image/*" multiple class="sr">
+<input type="file" id="fOcr" accept="image/*" class="sr">
+<input type="file" id="fCam" accept="image/*" capture="environment" class="sr">
+<input type="file" id="fSig" accept="image/*" class="sr">
+<input type="file" id="fImgs1" accept="image/*" class="sr">
+<input type="file" id="fOffice" accept=".docx,.xlsx,.xlsm,.xls,.csv,.ods,.pptx,.txt,.doc,.ppt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,text/csv" class="sr">
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf.worker.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script src="lib/jszip.min.js"></script>
+<script>
+"use strict";
+window.addEventListener("error", e => { try { toast("خطأ: " + (e.message || "غير معروف"), 6000); } catch (x) {} });
+window.addEventListener("unhandledrejection", e => { try { toast("خطأ: " + (e.reason?.message || e.reason || "غير معروف"), 6000); } catch (x) {} });
+document.documentElement.setAttribute("dir", "rtl");
+document.documentElement.setAttribute("lang", "ar");
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const AR = /[؀-ۿ]/;
+const { PDFDocument, degrees } = window.PDFLib || {};
+
+/* ───────── حالة التطبيق ───────── */
+const S = {
+  bytes: null, name: "", pdf: null, sizes: [], sel: new Set(), undo: [],
+  overlays: [], placing: null, active: null, sample: false, renderTok: 0
+};
+let caps = { downloads: null, sample: null, images: null };
+
+/* ───────── أدوات مساعدة للواجهة ───────── */
+function toast(msg, ms = 2600) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg; document.body.append(t);
+  setTimeout(() => t.remove(), ms);
+}
+let busyEl = null;
+function busy(msg) {
+  if (!msg) { busyEl?.remove(); busyEl = null; return; }
+  if (!busyEl) { busyEl = document.createElement("div"); busyEl.className = "busy"; busyEl.innerHTML = '<div><span class="spin"></span><span></span></div>'; document.body.append(busyEl); }
+  busyEl.querySelector("span:last-child").textContent = msg;
+}
+const tick = () => new Promise(r => setTimeout(r, 0));
+
+function sheet(build) {
+  return new Promise(resolve => {
+    const scrim = document.createElement("div"); scrim.className = "scrim";
+    const box = document.createElement("div"); box.className = "sheetdlg gut";
+    box.innerHTML = '<div class="grab"></div>';
+    scrim.append(box); document.body.append(scrim);
+    const close = v => { scrim.remove(); resolve(v); };
+    scrim.addEventListener("click", e => { if (e.target === scrim) close(null); });
+    build(box, close);
+  });
+}
+function confirmSheet(title, text, okLabel = "نعم", danger = false) {
+  return sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2></h2><p class="lead"></p><div class="acts"><button class="btn" data-v="0">إلغاء</button><button class="btn ${danger ? "danger" : "primary"}" data-v="1"></button></div>`);
+    b.querySelector("h2").textContent = title; b.querySelector("p").textContent = text;
+    b.querySelector('[data-v="1"]').textContent = okLabel;
+    b.querySelectorAll("[data-v]").forEach(x => x.onclick = () => close(x.dataset.v === "1"));
+  });
+}
+function pickFiles(input) {
+  return new Promise(res => {
+    input.value = "";
+    input.onchange = () => res([...input.files]);
+    input.click();
+  });
+}
+
+/* ───────── الحفظ إلى الهاتف ───────── */
+async function saveFile(filename, data) {
+  if (!caps.downloads) { toast("الحفظ غير متاح في هذا العرض. افتح الصفحة من تطبيق Claude أو المتصفح."); return false; }
+  try {
+    const r = await caps.downloads.save({ filename, data });
+    if (r?.status === "saved") toast("تم الحفظ: " + filename);
+    return true;
+  } catch (e) {
+    const m = { declined: "لم يتم الحفظ", rate_limited: "انتظر قليلاً ثم أعد المحاولة", too_large: "الملف أكبر من المسموح للحفظ هنا" }[e?.code];
+    toast(m || "تعذر الحفظ: " + (e?.message || e?.code || ""));
+    return false;
+  }
+}
+const baseName = n => (n || "مستند").replace(/\.[^.]+$/, "");
+
+/* ───────── التبويبات ───────── */
+const SUBS = { home: "مستنداتك ونصوصك على الهاتف", pdf: "محرر PDF", office: "Word · Excel · PowerPoint", scan: "ماسح المستندات والباركود", text: "استخراج النصوص والترجمة والقراءة" };
+const scrollPos = {};
+let curTab = null;
+function showTab(t) {
+  if (curTab) scrollPos[curTab] = $("#main").scrollTop;
+  curTab = t;
+  $$("[data-view]").forEach(v => v.hidden = v.dataset.view !== t);
+  $$("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  $("#topSub").textContent = SUBS[t];
+  $("#selBar").hidden = !(t === "pdf" && S.sel.size);
+  $("#ovBar").hidden = !(t === "pdf" && (S.overlays.length || S.placing));
+  $("#main").scrollTop = scrollPos[t] || 0;
+  try { localStorage.setItem("nl_tab", t); } catch (e) {}
+}
+$$("nav.tabs button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+/* ───────── عرض PDF ───────── */
+async function loadBytes(bytes, name, { keepUndo = false, sample = false } = {}) {
+  if (!window.pdfjsLib) { toast("تعذر تحميل مكتبة PDF. تحقق من الإنترنت ثم أعد فتح الصفحة."); return; }
+  if (!keepUndo) S.undo = [];
+  S.bytes = bytes; S.name = name; S.sample = sample;
+  S.sel.clear(); S.overlays = []; S.placing = null; S.active = null;
+  try { S.pdf?.destroy(); } catch (e) {}
+  S.pdf = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+  S.sizes = [];
+  for (let i = 1; i <= S.pdf.numPages; i++) {
+    const p = await S.pdf.getPage(i);
+    const vp = p.getViewport({ scale: 1 });
+    S.sizes.push([vp.width, vp.height]);
+    if (i % 50 === 0) await tick();
+  }
+  buildPages();
+  updateBars();
+}
+let io = null;
+function buildPages() {
+  const box = $("#pages"); box.innerHTML = "";
+  io?.disconnect();
+  const tok = ++S.renderTok;
+  io = new IntersectionObserver(ents => {
+    for (const e of ents) {
+      const pg = e.target, i = +pg.dataset.i;
+      if (e.isIntersecting) { if (!pg.dataset.r) renderPage(pg, i, tok); }
+      else if (pg.dataset.r) { const c = pg.querySelector("canvas"); if (c) { c.width = c.height = 0; c.remove(); } delete pg.dataset.r; pg.querySelector(".ph").hidden = false; }
+    }
+  }, { root: $("#main"), rootMargin: "1200px 0px" });
+  S.sizes.forEach(([w, h], i) => {
+    const pg = document.createElement("div"); pg.className = "pg"; pg.dataset.i = i;
+    pg.innerHTML = `<div class="sheet"><div class="ph" style="aspect-ratio:${w}/${h}"></div></div>
+      <div class="cap"><span>صفحة ${i + 1} من ${S.sizes.length}</span>
+      <label class="pick"><input type="checkbox" id="pk${i}" aria-label="تحديد الصفحة ${i + 1}">تحديد</label></div>`;
+    pg.querySelector("input").onchange = e => { e.target.checked ? S.sel.add(i) : S.sel.delete(i); pg.classList.toggle("selected", e.target.checked); updateBars(); };
+    pg.querySelector(".sheet").addEventListener("click", ev => onSheetTap(ev, i, pg));
+    box.append(pg); io.observe(pg);
+  });
+  if (!S.sizes.length) emptyPdf();
+  $("#docName").textContent = S.name || "—";
+  $("#docInfo").textContent = S.sizes.length ? `${S.sizes.length} صفحة${S.sample ? " · ملف تجريبي" : ""}` : "";
+}
+function emptyPdf() {
+  $("#pages").innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg><div>لا يوجد ملف مفتوح</div><button class="btn primary" data-act="openPdf">فتح ملف PDF</button></div>`;
+}
+async function renderPage(pg, i, tok) {
+  pg.dataset.r = "1";
+  try {
+    const page = await S.pdf.getPage(i + 1);
+    if (tok !== S.renderTok) return;
+    const w = pg.clientWidth || 360;
+    const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    const vp1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: (w / vp1.width) * dpr });
+    const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    await page.render({ canvasContext: c.getContext("2d", { alpha: false }), viewport: vp }).promise;
+    if (tok !== S.renderTok || !pg.dataset.r) return;
+    const sh = pg.querySelector(".sheet"); sh.querySelector(".ph").hidden = true;
+    sh.prepend(c);
+    drawOverlays(i);
+  } catch (e) { delete pg.dataset.r; }
+}
+function updateBars() {
+  const n = S.sel.size;
+  $("#selCount").textContent = n ? `${n} صفحة محددة` : "";
+  $("#selBar").hidden = !n || $("#v-pdf").hidden;
+  $("#bUndo").disabled = !S.undo.length;
+  $("#bSave").disabled = !S.bytes;
+  const on = S.overlays.length || S.placing;
+  $("#ovBar").hidden = !on || $("#v-pdf").hidden;
+  $("#ovHint").textContent = S.placing ? "انقر مكان الوضع على الصفحة" : (S.active ? "اسحب · ⤡ الحجم · ↻ تدوير" : (S.overlays.length ? "انقر عنصراً لتعديله" : ""));
+  $("#bOvEdit").hidden = !(S.active && S.active.kind === "text");
+  $("#bOvAll").hidden = !S.active || S.sizes.length < 2;
+  $("#bOvDate").hidden = !(S.active && S.active.kind === "sig");
+  $("#pages").classList.toggle("placing", !!S.placing);
+}
+
+/* تعديل البايتات مع حفظ نسخة للتراجع */
+async function commit(fn, label) {
+  if (!S.bytes) { toast("افتح ملف PDF أولاً"); return; }
+  busy(label || "جاري التعديل...");
+  try {
+    await tick();
+    const doc = await PDFDocument.load(S.bytes, { ignoreEncryption: true });
+    const res = await fn(doc);
+    const out = res instanceof Uint8Array ? res : await doc.save();
+    S.undo.push(S.bytes); if (S.undo.length > 12) S.undo.shift();
+    const keepScroll = $("#main").scrollTop;
+    await loadBytes(out, S.name, { keepUndo: true });
+    $("#main").scrollTop = keepScroll;
+  } catch (e) {
+    console.error(e); toast("تعذر التعديل: " + (e.message || e));
+  } finally { busy(); }
+}
+
+/* ───────── أوامر PDF ───────── */
+async function openPdf() {
+  const [f] = await pickFiles($("#fPdf"));
+  if (!f) return;
+  busy("جاري فتح الملف...");
+  try { await loadBytes(new Uint8Array(await f.arrayBuffer()), f.name); showTab("pdf"); }
+  catch (e) { toast(e?.name === "PasswordException" ? "الملف محمي بكلمة مرور ولا يمكن فتحه هنا" : "تعذر فتح الملف: " + (e.message || e)); }
+  finally { busy(); }
+}
+async function savePdf() {
+  if (!S.bytes) return;
+  if (S.overlays.length) await applyOverlays();
+  await saveFile(baseName(S.name) + (S.name.toLowerCase().endsWith(".pdf") ? ".pdf" : ".pdf"), new Blob([S.bytes]));
+}
+async function undo() {
+  if (!S.undo.length) return;
+  const prev = S.undo.pop();
+  busy("جاري التراجع...");
+  try { await loadBytes(prev, S.name, { keepUndo: true }); } finally { busy(); }
+}
+const selList = () => [...S.sel].sort((a, b) => a - b);
+async function rotSel() { const idx = selList(); await commit(d => { idx.forEach(i => { const p = d.getPage(i); p.setRotation(degrees((p.getRotation().angle + 90) % 360)); }); }, "جاري التدوير..."); idx.forEach(i => selectPage(i, true)); }
+async function delSel() {
+  const idx = selList();
+  if (idx.length >= S.sizes.length) { toast("لا يمكن حذف كل الصفحات"); return; }
+  if (!await confirmSheet("حذف الصفحات", `حذف ${idx.length} صفحة؟ يمكنك التراجع بعدها.`, "حذف", true)) return;
+  await commit(d => { idx.reverse().forEach(i => d.removePage(i)); }, "جاري الحذف...");
+}
+async function reorder(order, label) {
+  await commit(async d => { const n = await PDFDocument.create(); const ps = await n.copyPages(d, order); ps.forEach(p => n.addPage(p)); return await n.save(); }, label);
+}
+async function moveSel(dir) {
+  const idx = selList(); if (idx.length !== 1) { toast("حدد صفحة واحدة لنقلها"); return; }
+  const i = idx[0], j = i + dir; if (j < 0 || j >= S.sizes.length) return;
+  const order = S.sizes.map((_, k) => k); [order[i], order[j]] = [order[j], order[i]];
+  await reorder(order, "جاري النقل...");
+  selectPage(j, true);
+  $(`.pg[data-i="${j}"]`)?.scrollIntoView({ block: "center" });
+}
+function selectPage(i, on) { const cb = $("#pk" + i); if (!cb) return; cb.checked = on; on ? S.sel.add(i) : S.sel.delete(i); cb.closest(".pg").classList.toggle("selected", on); updateBars(); }
+async function extractSel() {
+  const idx = selList(); busy("جاري تجهيز الملف...");
+  try {
+    const d = await PDFDocument.load(S.bytes, { ignoreEncryption: true }); const n = await PDFDocument.create();
+    (await n.copyPages(d, idx)).forEach(p => n.addPage(p));
+    const out = await n.save(); busy();
+    await saveFile(`${baseName(S.name)}_صفحات_${idx.map(i => i + 1).join("-").slice(0, 40)}.pdf`, new Blob([out]));
+  } catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+function clearSel() { selList().forEach(i => selectPage(i, false)); }
+
+/* إضافة ملفات PDF وصور (دمج) */
+async function imageToJpeg(file, maxSide = 2400) {
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+  let w, h, src = bmp;
+  if (!bmp) { const im = new Image(); im.src = URL.createObjectURL(file); await im.decode(); src = im; }
+  w = src.width; h = src.height; const k = Math.min(1, maxSide / Math.max(w, h));
+  const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(src, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.88));
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), w: c.width, h: c.height };
+}
+async function addImagePage(doc, file) {
+  const j = await imageToJpeg(file); const img = await doc.embedJpg(j.bytes);
+  const land = j.w > j.h; const [PW, PH] = land ? [842, 595] : [595, 842]; const m = 24;
+  const k = Math.min((PW - 2 * m) / j.w, (PH - 2 * m) / j.h);
+  const p = doc.addPage([PW, PH]);
+  p.drawImage(img, { x: (PW - j.w * k) / 2, y: (PH - j.h * k) / 2, width: j.w * k, height: j.h * k });
+}
+async function appendFiles(doc, files, onStep) {
+  let k = 0;
+  for (const f of files) {
+    onStep?.(++k, files.length, f.name);
+    if (f.type === "application/pdf" || /\.pdf$/i.test(f.name)) {
+      const src = await PDFDocument.load(new Uint8Array(await f.arrayBuffer()), { ignoreEncryption: true });
+      (await doc.copyPages(src, src.getPageIndices())).forEach(p => doc.addPage(p));
+    } else if (f.type.startsWith("image/")) await addImagePage(doc, f);
+  }
+}
+async function mergePdf(fromHome) {
+  const files = await pickFiles($("#fMerge")); if (!files.length) return;
+  if (fromHome || !S.bytes) {
+    busy("جاري الدمج...");
+    try {
+      const d = await PDFDocument.create();
+      await appendFiles(d, files, (k, n) => busy(`جاري الدمج ${k}/${n}...`));
+      await loadBytes(await d.save(), files.length > 1 ? "ملف مدمج.pdf" : baseName(files[0].name) + ".pdf"); showTab("pdf");
+    } catch (e) { toast("تعذر الدمج: " + e.message); } finally { busy(); }
+  } else {
+    await commit(async d => { await appendFiles(d, files, (k, n) => busy(`إضافة ${k}/${n}...`)); }, "جاري إضافة الملفات...");
+    toast(`أضيف ${files.length} ملف في نهاية المستند`);
+  }
+}
+async function imagesToPdf() {
+  const files = await pickFiles($("#fImgs")); if (!files.length) return;
+  busy("جاري إنشاء PDF...");
+  try {
+    const d = await PDFDocument.create();
+    let k = 0; for (const f of files) { busy(`صورة ${++k} من ${files.length}...`); await addImagePage(d, f); }
+    await loadBytes(await d.save(), "صور.pdf"); showTab("pdf");
+    toast("جاهز. اضغط «حفظ» لحفظه على الهاتف");
+  } catch (e) { toast("تعذر: " + e.message); } finally { busy(); }
+}
+async function insertBlank() {
+  const at = S.sel.size === 1 ? selList()[0] + 1 : S.sizes.length;
+  const [w, h] = S.sizes[Math.max(0, at - 1)] || [595, 842];
+  await commit(d => { d.insertPage(at, [w, h]); }, "جاري الإضافة...");
+}
+
+/* ───────── عناصر فوق الصفحة (نص / توقيع / تاريخ) ───────── */
+function textPng(text, size, color, bold, family) {
+  const lines = text.split("\n"); const s = 3;
+  const fam = family || '"IBM Plex Sans Arabic", Tahoma, Arial, sans-serif';
+  const f = `${bold ? 700 : 400} ${size * s}px ${fam}`;
+  const c = document.createElement("canvas"); const g = c.getContext("2d"); g.font = f;
+  const lh = size * s * 1.45; const w = Math.max(...lines.map(l => g.measureText(l).width), 10) + 8 * s;
+  c.width = Math.ceil(w); c.height = Math.ceil(lh * lines.length + 6 * s);
+  g.font = f; g.fillStyle = color; g.textBaseline = "top";
+  const rtl = AR.test(text); g.direction = rtl ? "rtl" : "ltr"; g.textAlign = rtl ? "right" : "left";
+  lines.forEach((l, k) => g.fillText(l, rtl ? c.width - 4 * s : 4 * s, 3 * s + k * lh));
+  return { url: c.toDataURL("image/png"), w: c.width / s, h: c.height / s };
+}
+function startPlacing(item) { S.placing = item; S.active = null; updateBars(); }
+function onSheetTap(ev, i, pg) {
+  if (ev.target.closest(".ov")) return;
+  if (!S.placing) { if (S.active) { S.active = null; refreshOv(); } return; }
+  const sh = pg.querySelector(".sheet"); const r = sh.getBoundingClientRect();
+  const [pw] = S.sizes[i]; const scale = r.width / pw;              // بكسل الشاشة لكل نقطة PDF
+  const wv = S.placing.w * scale, hv = S.placing.h * scale;
+  const x = Math.min(Math.max(0, ev.clientX - r.left - wv / 2), Math.max(0, r.width - wv)), y = Math.min(Math.max(0, ev.clientY - r.top - hv / 2), Math.max(0, r.height - hv));
+  const o = { page: i, url: S.placing.url, fx: x / r.width, fy: y / r.height, fw: Math.min(1, wv / r.width), fh: Math.min(1, hv / r.height), rot: 0, kind: S.placing.kind, src: S.placing.src, nat: { w: S.placing.w, h: S.placing.h } };
+  S.overlays.push(o); S.active = o; S.placing = null; drawOverlays(i); updateBars();
+}
+function refreshOv() { new Set(S.overlays.map(o => o.page)).forEach(drawOverlays); updateBars(); }
+function drawOverlays(i) {
+  const pg = $(`.pg[data-i="${i}"]`); if (!pg) return;
+  const sh = pg.querySelector(".sheet"); sh.querySelectorAll(".ov").forEach(o => o.remove());
+  S.overlays.forEach(o => {
+    if (o.page !== i) return;
+    const el = document.createElement("div"); el.className = "ov" + (S.active === o ? " on" : "");
+    el.innerHTML = `<img alt=""><button class="x" aria-label="حذف">×</button><button class="rs" aria-label="تغيير الحجم">⤡</button><button class="rt" aria-label="تدوير">↻</button>`;
+    el.querySelector("img").src = o.url;
+    const place = () => Object.assign(el.style, { left: o.fx * 100 + "%", top: o.fy * 100 + "%", width: o.fw * 100 + "%", height: o.fh * 100 + "%", transform: `rotate(${o.rot || 0}deg)` });
+    place();
+    el.addEventListener("pointerdown", () => { if (S.active !== o) { S.active = o; sh.querySelectorAll(".ov").forEach(x => x.classList.toggle("on", x === el)); updateBars(); } }, true);
+    el.querySelector(".x").onclick = e => { e.stopPropagation(); S.overlays.splice(S.overlays.indexOf(o), 1); if (S.active === o) S.active = null; drawOverlays(i); updateBars(); };
+    drag(el, sh, (dx, dy) => { o.fx = Math.min(Math.max(-o.fw * 0.3, o.fx + dx), 1 - o.fw * 0.7); o.fy = Math.min(Math.max(-o.fh * 0.3, o.fy + dy), 1 - o.fh * 0.7); place(); });
+    drag(el.querySelector(".rs"), sh, (dx) => { const ar = o.fh / o.fw; const nw = Math.min(Math.max(0.03, o.fw + dx), 1.2); o.fw = nw; o.fh = nw * ar; place(); }, "rs");
+    drag(el.querySelector(".rt"), sh, (_dx, _dy, ev) => {
+      const r = el.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      let a = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI + 90;
+      a = ((a + 540) % 360) - 180; if (Math.abs(a) < 4) a = 0; o.rot = Math.round(a); place();
+    }, "rt");
+    sh.append(el);
+  });
+}
+function drag(handle, area, move, kind) {
+  handle.addEventListener("pointerdown", e => {
+    const t = e.target.classList;
+    if (t.contains("x") || (!kind && (t.contains("rs") || t.contains("rt")))) return;
+    e.preventDefault(); e.stopPropagation(); handle.setPointerCapture(e.pointerId);
+    let lx = e.clientX, ly = e.clientY; const r = area.getBoundingClientRect();
+    const mv = ev => { move((ev.clientX - lx) / r.width, (ev.clientY - ly) / r.height, ev); lx = ev.clientX; ly = ev.clientY; };
+    const up = () => { handle.removeEventListener("pointermove", mv); handle.removeEventListener("pointerup", up); handle.removeEventListener("pointercancel", up); };
+    handle.addEventListener("pointermove", mv); handle.addEventListener("pointerup", up); handle.addEventListener("pointercancel", up);
+  });
+}
+/* موضع الصورة في إحداثيات PDF مع دوران الصفحة ودوران العنصر نفسه */
+function pdfPlacement(vp, pageRot, o) {
+  const W = vp.width, H = vp.height;
+  const w = o.fw * W, h = o.fh * H;
+  const [cx, cy] = vp.convertToPdfPoint((o.fx + o.fw / 2) * W, (o.fy + o.fh / 2) * H);
+  const th = (pageRot - (o.rot || 0)) * Math.PI / 180;
+  const ox = cx - ((w / 2) * Math.cos(th) - (h / 2) * Math.sin(th));
+  const oy = cy - ((w / 2) * Math.sin(th) + (h / 2) * Math.cos(th));
+  return { x: ox, y: oy, width: w, height: h, rotate: degrees(pageRot - (o.rot || 0)) };
+}
+async function applyOverlays() {
+  if (!S.overlays.length) { S.placing = null; updateBars(); return; }
+  const list = S.overlays.slice();
+  await commit(async d => {
+    const cache = {};
+    for (const o of list) {
+      const page = await S.pdf.getPage(o.page + 1); const vp = page.getViewport({ scale: 1 });
+      const img = cache[o.url] || (cache[o.url] = await d.embedPng(o.url));
+      const p = d.getPage(o.page);
+      p.drawImage(img, pdfPlacement(vp, p.getRotation().angle, o));
+    }
+  }, "جاري التثبيت...");
+  S.active = null;
+  toast("تم تثبيت العناصر في الملف");
+}
+function cancelOv() { const pages = new Set(S.overlays.map(o => o.page)); S.overlays = []; S.placing = null; S.active = null; pages.forEach(drawOverlays); updateBars(); }
+function ovAllPages() {
+  const o = S.active; if (!o) return;
+  let n = 0;
+  S.sizes.forEach((_, i) => { if (i !== o.page && !S.overlays.some(x => x.page === i && x.url === o.url)) { S.overlays.push({ ...o, page: i }); n++; } });
+  refreshOv(); toast(`أضيف إلى ${n} صفحة أخرى بنفس المكان — راجعها ثم «تثبيت»`, 3500);
+}
+function ovDate() {
+  const o = S.active; if (!o) return;
+  const d = new Date(); const ds = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  const png = textPng("التاريخ: " + ds, 11, "#222222");
+  const fw = (png.w / S.sizes[o.page][0]); const fh = (png.h / S.sizes[o.page][1]);
+  const n = { page: o.page, url: png.url, fx: Math.max(0, o.fx + o.fw / 2 - fw / 2), fy: Math.min(1 - fh, o.fy + o.fh + 0.005), fw, fh, rot: 0, kind: "text", src: { t: "التاريخ: " + ds, size: 11, color: "#222222", bold: false }, nat: { w: png.w, h: png.h } };
+  S.overlays.push(n); S.active = n; refreshOv();
+}
+async function ovEdit() {
+  const o = S.active; if (!o || o.kind !== "text") return;
+  const r = await textDialog(o.src);
+  if (!r) return;
+  const [W, H] = S.sizes[o.page];
+  const k = o.nat ? (o.fw * W) / o.nat.w : 1;           // نحافظ على التكبير الذي اختاره المستخدم
+  const png = textPng(r.t, r.size, r.color, r.bold);
+  o.url = png.url; o.src = r; o.nat = { w: png.w, h: png.h };
+  o.fw = png.w * k / W; o.fh = png.h * k / H;
+  refreshOv();
+}
+
+const COLORS = ["#111111", "#0b3d91", "#1d4ed8", "#b91c1c", "#0d7a62"];
+function swatches(list, sel) { return `<div class="swatches">${list.map(c => `<button type="button" data-c="${c}" style="background:${c}" aria-label="لون" aria-pressed="${c === sel}"></button>`).join("")}</div>`; }
+function bindSwatches(b, cb) { b.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { b.querySelectorAll("[data-c]").forEach(y => y.setAttribute("aria-pressed", y === x)); cb(x.dataset.c); }); }
+function textDialog(init) {
+  init = init || { t: "", size: 14, bold: false, color: COLORS[0] };
+  return sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>${init.t ? "تعديل النص" : "إضافة نص"}</h2>
+      <label class="field"><span>النص</span><textarea id="tTxt" dir="auto" style="min-height:90px" placeholder="اكتب النص هنا"></textarea></label>
+      <div class="row"><label class="field"><span>الحجم</span><input type="number" id="tSize" min="6" max="72" style="width:90px"></label>
+      <label class="field"><span>عريض</span><input type="checkbox" id="tBold" style="width:22px;height:22px"></label>
+      <div class="field"><span>اللون</span>${swatches(COLORS, init.color)}</div></div>
+      <div class="acts"><button class="btn" data-v="0">إلغاء</button><button class="btn primary" data-v="1">${init.t ? "حفظ التعديل" : "ضع النص على الصفحة"}</button></div>`);
+    $("#tTxt", b).value = init.t; $("#tSize", b).value = init.size; $("#tBold", b).checked = init.bold;
+    let color = init.color; bindSwatches(b, c => color = c);
+    setTimeout(() => $("#tTxt", b).focus(), 50);
+    b.querySelector('[data-v="0"]').onclick = () => close(null);
+    b.querySelector('[data-v="1"]').onclick = () => { const t = $("#tTxt", b).value.trim(); if (!t) { $("#tTxt", b).focus(); return; } close({ t, size: +$("#tSize", b).value || 14, bold: $("#tBold", b).checked, color }); };
+  });
+}
+async function addText() {
+  if (!S.bytes) { toast("افتح ملف PDF أولاً"); return; }
+  const r = await textDialog(); if (!r) return;
+  const png = textPng(r.t, r.size, r.color, r.bold);
+  startPlacing({ url: png.url, w: png.w, h: png.h, kind: "text", src: r });
+}
+
+/* ───────── التوقيعات: رسم، كتابة، صورة، ومحفوظة ───────── */
+const SIG_KEY = "nl_sigs";
+function savedSigs() { try { return JSON.parse(localStorage.getItem(SIG_KEY) || "[]"); } catch (e) { return []; } }
+function storeSig(sig) {
+  try { const l = savedSigs().filter(x => x.url !== sig.url); l.unshift(sig); localStorage.setItem(SIG_KEY, JSON.stringify(l.slice(0, 8))); }
+  catch (e) { toast("تعذر حفظ التوقيع في الهاتف (المساحة ممتلئة)"); }
+}
+function deleteSig(url) { try { localStorage.setItem(SIG_KEY, JSON.stringify(savedSigs().filter(x => x.url !== url))); } catch (e) {} }
+const SIG_FONTS = [["Aref Ruqaa", "رقعة"], ["Reem Kufi", "كوفي"], ["Great Vibes", "Great Vibes"], ["Dancing Script", "Dancing Script"]];
+function trimCanvas(c, pad = 6) {
+  const g = c.getContext("2d"); const { data, width: W, height: H } = g.getImageData(0, 0, c.width, c.height);
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return null;
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
+  const o = document.createElement("canvas"); o.width = x1 - x0 + 1; o.height = y1 - y0 + 1;
+  o.getContext("2d").drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
+  return { url: o.toDataURL("image/png"), w: o.width, h: o.height };
+}
+async function signatureFromPhoto(file, ink) {
+  const j = await imageToJpeg(file, 1600); const im = new Image(); im.src = URL.createObjectURL(new Blob([j.bytes], { type: "image/jpeg" })); await im.decode();
+  const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const g = c.getContext("2d"); g.drawImage(im, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height); const p = d.data;
+  // تقدير لون الورق ثم جعل كل ما يقاربه شفافاً
+  const hist = new Uint32Array(256); for (let k = 0; k < p.length; k += 16) hist[(p[k] * 0.3 + p[k + 1] * 0.59 + p[k + 2] * 0.11) | 0]++;
+  let acc = 0, tot = p.length / 16, paper = 255; for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc > tot * 0.4) { paper = v; break; } }
+  const lo = paper * 0.55, hi = paper * 0.88;
+  const rgb = ink ? [parseInt(ink.slice(1, 3), 16), parseInt(ink.slice(3, 5), 16), parseInt(ink.slice(5, 7), 16)] : null;
+  for (let k = 0; k < p.length; k += 4) {
+    const L = p[k] * 0.3 + p[k + 1] * 0.59 + p[k + 2] * 0.11;
+    const a = L <= lo ? 255 : L >= hi ? 0 : Math.round(255 * (hi - L) / (hi - lo));
+    if (rgb) { p[k] = rgb[0]; p[k + 1] = rgb[1]; p[k + 2] = rgb[2]; }
+    p[k + 3] = a;
+  }
+  g.putImageData(d, 0, 0);
+  return trimCanvas(c, 8);
+}
+async function signature() {
+  if (!S.bytes) { toast("افتح ملف PDF أولاً"); return; }
+  const res = await sheet((b, close) => {
+    const saved = savedSigs();
+    b.insertAdjacentHTML("beforeend", `<h2>التوقيع</h2>
+      <div class="segs" role="tablist">
+        <button data-t="saved" aria-selected="${saved.length ? "true" : "false"}">المحفوظة</button>
+        <button data-t="draw" aria-selected="${saved.length ? "false" : "true"}">رسم</button>
+        <button data-t="type" aria-selected="false">كتابة</button>
+        <button data-t="photo" aria-selected="false">من صورة</button></div>
+      <div data-p="saved"><div class="sigs" id="sigList"></div><p class="lead" id="sigNone">لا توجد توقيعات محفوظة بعد. ارسم توقيعك أو اكتبه أو صوّره، وسيُحفظ هنا لتستخدمه مرة أخرى.</p></div>
+      <div data-p="draw"><canvas class="pad" id="pad"></canvas>
+        <div class="row">${swatches(COLORS.slice(0, 4), COLORS[1])}
+        <label class="field" style="flex:1;min-width:120px"><span>سُمك الخط</span><input type="range" id="sigW" min="1" max="7" step="0.5" value="2.6"></label>
+        <button class="btn" id="padUndo">تراجع</button><button class="btn" id="padClr">مسح</button></div></div>
+      <div data-p="type"><label class="field"><span>اسمك أو أحرفك الأولى</span><input type="text" id="sigName" dir="auto" placeholder="مثال: عبدالله"></label>
+        <div class="fonts" id="sigFonts"></div><div class="row">${swatches(COLORS.slice(0, 4), COLORS[1])}</div></div>
+      <div data-p="photo"><p class="lead">وقّع على ورقة بيضاء بقلم داكن، ثم صوّرها. سنزيل الخلفية تلقائياً.</p>
+        <div class="row"><button class="btn primary" id="sigPhoto">تصوير / اختيار صورة</button>
+        <label class="field"><span>لون الحبر</span><select id="sigInk"><option value="">كما في الصورة</option><option value="#0b3d91">أزرق</option><option value="#111111">أسود</option></select></label></div>
+        <div class="sigprev" id="sigPrev"></div></div>
+      <label class="row" id="sigKeepRow" style="gap:8px;font-size:14px"><input type="checkbox" id="sigKeep" checked style="width:20px;height:20px">احفظ هذا التوقيع لاستخدامه لاحقاً</label>
+      <div class="acts"><button class="btn" data-v="0">إلغاء</button><button class="btn primary" data-v="1">ضع التوقيع</button></div>`);
+    let tab = saved.length ? "saved" : "draw";
+    const show = t => { tab = t; b.querySelectorAll("[data-t]").forEach(x => x.setAttribute("aria-selected", x.dataset.t === t)); b.querySelectorAll("[data-p]").forEach(p => p.hidden = p.dataset.p !== t); $("#sigKeepRow", b).hidden = t === "saved"; if (t === "draw") sizePad(); if (t === "type") renderFonts(); };
+    b.querySelectorAll("[data-t]").forEach(x => x.onclick = () => show(x.dataset.t));
+    // المحفوظة
+    let pickSaved = null;
+    const listSaved = () => {
+      const l = savedSigs(); $("#sigNone", b).hidden = !!l.length;
+      $("#sigList", b).innerHTML = l.map((s, k) => `<div class="sigitem" data-k="${k}"><img alt="توقيع ${k + 1}"><button class="x" aria-label="حذف">×</button></div>`).join("");
+      $$(".sigitem", b).forEach((el, k) => {
+        el.querySelector("img").src = l[k].url;
+        el.onclick = e => { if (e.target.classList.contains("x")) { deleteSig(l[k].url); listSaved(); return; } pickSaved = l[k]; $$(".sigitem", b).forEach(x => x.classList.toggle("on", x === el)); };
+      });
+    };
+    listSaved();
+    // الرسم
+    const c = $("#pad", b); const dpr = window.devicePixelRatio || 1; let strokes = [], cur = null, color = COLORS[1], width = 2.6;
+    const sizePad = () => requestAnimationFrame(() => { if (c.clientWidth) { c.width = c.clientWidth * dpr; c.height = c.clientHeight * dpr; redraw(); } });
+    const redraw = () => {
+      const g = c.getContext("2d"); g.clearRect(0, 0, c.width, c.height); g.strokeStyle = color; g.lineWidth = width * dpr; g.lineCap = g.lineJoin = "round";
+      for (const s of strokes) { g.beginPath(); g.moveTo(s[0][0], s[0][1]); for (let k = 1; k < s.length - 1; k++) { const mx = (s[k][0] + s[k + 1][0]) / 2, my = (s[k][1] + s[k + 1][1]) / 2; g.quadraticCurveTo(s[k][0], s[k][1], mx, my); } const l = s[s.length - 1]; g.lineTo(l[0], l[1]); g.stroke(); }
+    };
+    const pt = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr]; };
+    c.onpointerdown = e => { c.setPointerCapture(e.pointerId); cur = [pt(e)]; strokes.push(cur); };
+    c.onpointermove = e => { if (!cur) return; cur.push(pt(e)); redraw(); };
+    c.onpointerup = c.onpointercancel = () => { if (cur && cur.length === 1) { cur.push([cur[0][0] + 1, cur[0][1] + 1]); redraw(); } cur = null; };
+    $("#padUndo", b).onclick = () => { strokes.pop(); redraw(); };
+    $("#padClr", b).onclick = () => { strokes = []; redraw(); };
+    $("#sigW", b).oninput = e => { width = +e.target.value; redraw(); };
+    bindSwatches($('[data-p="draw"]', b), v => { color = v; redraw(); });
+    // الكتابة
+    let typeColor = COLORS[1], typeFont = SIG_FONTS[0][0];
+    const renderFonts = async () => {
+      const name = $("#sigName", b).value.trim() || "توقيعي";
+      $("#sigFonts", b).innerHTML = SIG_FONTS.map(([f, n]) => `<button type="button" data-f="${f}" aria-pressed="${f === typeFont}" style="font-family:'${f}',cursive;color:${typeColor}"></button>`).join("");
+      $$("#sigFonts button", b).forEach(x => { x.textContent = name; x.onclick = () => { typeFont = x.dataset.f; $$("#sigFonts button", b).forEach(y => y.setAttribute("aria-pressed", y === x)); }; });
+    };
+    $("#sigName", b).oninput = renderFonts;
+    bindSwatches($('[data-p="type"]', b), v => { typeColor = v; renderFonts(); });
+    // الصورة
+    let photoSig = null;
+    const runPhoto = async f => { if (!f) return; $("#sigPrev", b).textContent = "جاري المعالجة…"; try { photoSig = await signatureFromPhoto(f, $("#sigInk", b).value); $("#sigPrev", b).innerHTML = photoSig ? '<img alt="التوقيع">' : "لم يُعثر على توقيع واضح في الصورة"; if (photoSig) $("#sigPrev img", b).src = photoSig.url; } catch (e) { $("#sigPrev", b).textContent = "تعذر قراءة الصورة"; } };
+    let photoFile = null;
+    $("#sigPhoto", b).onclick = async () => { const [f] = await pickFiles($("#fSig")); photoFile = f; runPhoto(f); };
+    $("#sigInk", b).onchange = () => runPhoto(photoFile);
+    show(tab);
+    b.querySelector('[data-v="0"]').onclick = () => close(null);
+    b.querySelector('[data-v="1"]').onclick = async () => {
+      let sig = null;
+      if (tab === "saved") { if (!pickSaved) { toast("اختر توقيعاً من القائمة"); return; } return close({ sig: pickSaved, keep: false }); }
+      if (tab === "draw") { if (!strokes.length) { toast("ارسم توقيعك أولاً"); return; } sig = trimCanvas(c); }
+      if (tab === "type") {
+        const name = $("#sigName", b).value.trim(); if (!name) { $("#sigName", b).focus(); return; }
+        try { await document.fonts.load(`64px "${typeFont}"`); } catch (e) {}
+        const tc = document.createElement("canvas"); tc.width = 1400; tc.height = 360; const g = tc.getContext("2d");
+        g.font = `${typeFont === "Reem Kufi" ? 500 : 400} 150px "${typeFont}", cursive`; g.fillStyle = typeColor; g.textBaseline = "middle";
+        g.direction = AR.test(name) ? "rtl" : "ltr"; g.textAlign = "center"; g.fillText(name, 700, 190);
+        sig = trimCanvas(tc, 10);
+      }
+      if (tab === "photo") { if (!photoSig) { toast("صوّر توقيعك أولاً"); return; } sig = photoSig; }
+      if (!sig) { toast("التوقيع فارغ"); return; }
+      close({ sig, keep: $("#sigKeep", b).checked });
+    };
+  });
+  if (!res) return;
+  if (res.keep) storeSig(res.sig);
+  const w = 150, h = 150 * res.sig.h / res.sig.w;
+  startPlacing({ url: res.sig.url, w: h > 70 ? 70 * res.sig.w / res.sig.h : w, h: Math.min(h, 70), kind: "sig" });
+}
+
+
+/* أدوات على كل الصفحات */
+async function stampAll(makePng, where, label) {
+  await commit(async d => {
+    const n = d.getPageCount();
+    for (let i = 0; i < n; i++) {
+      const page = await S.pdf.getPage(i + 1); const vp = page.getViewport({ scale: 1 });
+      const png = makePng(i, n); const img = await d.embedPng(png.url);
+      const box = where(vp.width, vp.height, png.w, png.h);
+      const [x, y] = vp.convertToPdfPoint(box.x, box.y + box.h);
+      const p = d.getPage(i);
+      p.drawImage(img, { x, y, width: box.w, height: box.h, rotate: degrees(p.getRotation().angle), opacity: box.o ?? 1 });
+      if (i % 20 === 0) busy(`${label} ${i + 1}/${n}`);
+    }
+  }, label);
+}
+async function pageNumbers() {
+  const r = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>ترقيم الصفحات</h2>
+      <label class="field"><span>الشكل</span><select id="nFmt"><option value="n">1، 2، 3</option><option value="of">صفحة 1 من 10</option><option value="ar">١، ٢، ٣</option></select></label>
+      <label class="field"><span>المكان</span><select id="nPos"><option value="bc">أسفل الوسط</option><option value="br">أسفل اليمين</option><option value="bl">أسفل اليسار</option><option value="tc">أعلى الوسط</option></select></label>
+      <div class="acts"><button class="btn" data-v="0">إلغاء</button><button class="btn primary" data-v="1">ترقيم</button></div>`);
+    b.querySelector('[data-v="0"]').onclick = () => close(null);
+    b.querySelector('[data-v="1"]').onclick = () => close({ fmt: $("#nFmt", b).value, pos: $("#nPos", b).value });
+  });
+  if (!r) return;
+  const ar = n => String(n).replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+  await stampAll((i, n) => textPng(r.fmt === "of" ? `صفحة ${i + 1} من ${n}` : r.fmt === "ar" ? ar(i + 1) : String(i + 1), 10, "#333333"),
+    (W, H, w, h) => ({ x: r.pos === "br" ? W - w - 28 : r.pos === "bl" ? 28 : (W - w) / 2, y: r.pos === "tc" ? 18 : H - h - 18, w, h }), "جاري الترقيم...");
+}
+async function watermark() {
+  const r = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>علامة مائية</h2>
+      <label class="field"><span>النص</span><input type="text" id="wTxt" dir="auto" value="نسخة" ></label>
+      <div class="acts"><button class="btn" data-v="0">إلغاء</button><button class="btn primary" data-v="1">إضافة</button></div>`);
+    b.querySelector('[data-v="0"]').onclick = () => close(null);
+    b.querySelector('[data-v="1"]').onclick = () => close($("#wTxt", b).value.trim() || null);
+  });
+  if (!r) return;
+  await stampAll(() => textPng(r, 54, "#9aa4a0", true), (W, H, w, h) => { const k = Math.min(1, (W * 0.8) / w); return { x: (W - w * k) / 2, y: (H - h * k) / 2, w: w * k, h: h * k, o: 0.35 }; }, "جاري الإضافة...");
+}
+async function renderToCanvas(i, scale) {
+  const page = await S.pdf.getPage(i + 1); const vp = page.getViewport({ scale });
+  const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+  const g = c.getContext("2d", { alpha: false }); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: g, viewport: vp }).promise; return c;
+}
+const toBlob = (c, t = "image/jpeg", q = 0.85) => new Promise(r => c.toBlob(r, t, q));
+async function compress() {
+  const q = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>تصغير حجم الملف</h2><p class="lead">تُحوَّل الصفحات إلى صور مضغوطة. يصغر الحجم كثيراً، لكن لن يمكن تحديد النص بعدها.</p>
+      <label class="field"><span>الجودة</span><select id="cq"><option value="1.4,0.6">متوسطة (موصى بها)</option><option value="1.1,0.45">حجم أصغر</option><option value="2,0.75">جودة أعلى</option></select></label>
+      <div class="acts"><button class="btn" data-v="0">إلغاء</button><button class="btn primary" data-v="1">ضغط</button></div>`);
+    b.querySelector('[data-v="0"]').onclick = () => close(null);
+    b.querySelector('[data-v="1"]').onclick = () => close($("#cq", b).value.split(",").map(Number));
+  });
+  if (!q) return;
+  const before = S.bytes.length;
+  await commit(async () => {
+    const n = await PDFDocument.create();
+    for (let i = 0; i < S.sizes.length; i++) {
+      busy(`ضغط الصفحة ${i + 1} من ${S.sizes.length}...`);
+      const c = await renderToCanvas(i, q[0]); const jb = new Uint8Array(await (await toBlob(c, "image/jpeg", q[1])).arrayBuffer());
+      const img = await n.embedJpg(jb); const [w, h] = S.sizes[i]; n.addPage([w, h]).drawImage(img, { x: 0, y: 0, width: w, height: h });
+      c.width = c.height = 0;
+    }
+    return await n.save();
+  }, "جاري الضغط...");
+  toast(`الحجم: ${(before / 1048576).toFixed(1)} ← ${(S.bytes.length / 1048576).toFixed(1)} ميجابايت`, 4000);
+}
+async function splitAll() {
+  if (!window.JSZip) { toast("تعذر تحميل أداة الضغط"); return; }
+  busy("جاري التقسيم...");
+  try {
+    const d = await PDFDocument.load(S.bytes, { ignoreEncryption: true }); const zip = new JSZip(); const b = baseName(S.name);
+    for (let i = 0; i < d.getPageCount(); i++) { const n = await PDFDocument.create(); const [p] = await n.copyPages(d, [i]); n.addPage(p); zip.file(`${b}_${String(i + 1).padStart(3, "0")}.pdf`, await n.save()); if (i % 10 === 0) busy(`صفحة ${i + 1}...`); }
+    const blob = await zip.generateAsync({ type: "blob" }); busy();
+    await saveFile(`${b}_مقسم.zip`, blob);
+  } catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+async function toImages() {
+  const idx = S.sel.size ? selList() : S.sizes.map((_, i) => i);
+  busy("جاري تحويل الصفحات إلى صور...");
+  try {
+    const b = baseName(S.name);
+    if (idx.length === 1) { const c = await renderToCanvas(idx[0], 2); busy(); await saveFile(`${b}_${idx[0] + 1}.jpg`, await toBlob(c, "image/jpeg", 0.9)); return; }
+    const zip = new JSZip();
+    for (const i of idx) { busy(`صورة ${i + 1}...`); const c = await renderToCanvas(i, 2); zip.file(`${b}_${String(i + 1).padStart(3, "0")}.jpg`, await toBlob(c, "image/jpeg", 0.9)); c.width = c.height = 0; }
+    const blob = await zip.generateAsync({ type: "blob" }); busy();
+    await saveFile(`${b}_صور.zip`, blob);
+  } catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+
+/* نص من PDF */
+async function pdfText(maxPages = 200) {
+  const parts = [];
+  for (let i = 1; i <= Math.min(S.pdf.numPages, maxPages); i++) {
+    const tc = await (await S.pdf.getPage(i)).getTextContent(); let lastY = null, line = "", lines = [];
+    for (const it of tc.items) { const y = Math.round(it.transform[5]); if (lastY !== null && Math.abs(y - lastY) > 3) { lines.push(line); line = ""; } line += it.str; if (it.hasEOL) { lines.push(line); line = ""; } lastY = y; }
+    if (line) lines.push(line);
+    parts.push(lines.map(l => l.trim()).filter(Boolean).join("\n"));
+  }
+  return parts;
+}
+async function textFromPdf() {
+  if (!S.pdf) { toast("افتح ملف PDF من قسم PDF أولاً"); return; }
+  busy("جاري قراءة النص...");
+  try {
+    const parts = await pdfText(); busy();
+    const txt = parts.map((p, k) => parts.length > 1 ? `— صفحة ${k + 1} —\n${p}` : p).join("\n\n").trim();
+    if (txt.replace(/— صفحة \d+ —/g, "").trim().length > 20) { setSrc(txt, "من ملف: " + S.name); showTab("text"); return; }
+    if (await confirmSheet("لا يوجد نص قابل للنسخ", "يبدو أن الصفحات صور ممسوحة. أستخرج النص منها بقراءة الصور؟ (حتى 5 صفحات في كل مرة)", "استخراج")) await ocrPdfPages();
+  } catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+
+/* ───────── Claude: قراءة الصور والترجمة ───────── */
+const OCR_PROMPT = "Transcribe ALL the text in the attached image(s) exactly as written, keeping the original language (Arabic, English or other), the reading order and the line breaks. Arabic must be written correctly from right to left. Do not translate, explain or add anything. If several images are attached, output each one's text in order separated by a line containing only ---. If an image has no readable text, write: (لا يوجد نص)";
+async function needSample(img) {
+  if (!caps.sample) { toast("هذه الميزة تعمل فقط داخل تطبيق Claude أو claude.ai"); return false; }
+  if (img && !caps.images) { toast("إرسال الصور غير متاح في هذا العرض"); return false; }
+  return true;
+}
+function sampleErr(e) {
+  return { not_granted: "لم يُسمح باستخدام Claude لهذه الصفحة", rate_limited: "طلبات كثيرة. انتظر دقيقة ثم أعد المحاولة", cancelled: "تم الإيقاف", image_rejected: "الصورة غير مدعومة أو كبيرة جداً" }[e?.code] || ("تعذر: " + (e?.message || e?.code || ""));
+}
+async function ocrImage() {
+  if (!await needSample(true)) return;
+  const [f] = await pickFiles($("#fOcr")); if (!f) return;
+  showTab("text");
+  const st = $("#srcStatus"); st.textContent = "جاري قراءة الصورة… (قد يستغرق دقيقة)";
+  try {
+    const j = await imageToJpeg(f, 2400);
+    const { text } = await caps.sample(OCR_PROMPT, { images: [new Blob([j.bytes], { type: "image/jpeg" })], onText: ({ text }) => { $("#srcText").value = text; } });
+    setSrc(text.trim(), "من صورة: " + f.name); st.textContent = "تم استخراج النص — راجعه وصحّح إن لزم";
+  } catch (e) { st.textContent = sampleErr(e); }
+}
+async function ocrPdfPages() {
+  if (!await needSample(true)) return;
+  const idx = (S.sel.size ? selList() : S.sizes.map((_, i) => i)).slice(0, 5);
+  showTab("text"); const st = $("#srcStatus");
+  try {
+    const max = Math.max(1, Math.min(5, caps.images?.maxCount || 1)); const out = [];
+    for (let s = 0; s < idx.length; s += max) {
+      const chunk = idx.slice(s, s + max); st.textContent = `جاري قراءة الصفحات ${chunk.map(i => i + 1).join("، ")}…`;
+      const blobs = []; for (const i of chunk) { const c = await renderToCanvas(i, 1.8); blobs.push(await toBlob(c, "image/jpeg", 0.85)); }
+      const { text } = await caps.sample(OCR_PROMPT, { images: blobs });
+      text.split(/^\s*---\s*$/m).forEach((t, k) => out.push(`— صفحة ${chunk[k] + 1} —\n${t.trim()}`));
+      $("#srcText").value = out.join("\n\n");
+    }
+    setSrc(out.join("\n\n"), "من ملف: " + S.name);
+    st.textContent = idx.length < S.sizes.length && !S.sel.size ? `تمت قراءة أول ${idx.length} صفحات. حدد صفحات أخرى في قسم PDF ثم أعد.` : "تم استخراج النص";
+  } catch (e) { st.textContent = sampleErr(e); }
+}
+const LANGS = [["Arabic", "العربية"], ["English", "English"], ["French", "Français"], ["Turkish", "Türkçe"], ["Urdu", "اردو"], ["Hindi", "हिन्दी"], ["Persian", "فارسی"], ["Spanish", "Español"], ["German", "Deutsch"], ["Russian", "Русский"], ["Chinese (Simplified)", "中文"], ["Malayalam", "മലയാളം"], ["Bengali", "বাংলা"], ["Tagalog", "Tagalog"]];
+$("#trLang").innerHTML = LANGS.map(([v, n]) => `<option value="${v}">${n}</option>`).join("");
+let trCtl = null;
+async function translate() {
+  const src = $("#srcText").value.trim();
+  if (!src) { $("#srcText").focus(); return; }
+  if (!await needSample(false)) return;
+  let lang = $("#trLang").value;
+  const st = $("#trStatus"); st.textContent = "جاري الترجمة…"; $("#bStopTr").hidden = false; $("#bTranslate").disabled = true;
+  trCtl = new AbortController();
+  try {
+    const prompt = `Translate the following text into ${lang}. Keep the meaning, tone, paragraphs, line breaks, numbers and names. If the text is already in ${lang}, translate it into ${lang === "English" ? "Arabic" : "English"} instead. Output only the translation, with no notes.\n\n<text>\n${src.slice(0, 60000)}\n</text>`;
+    const { truncated } = await caps.sample(prompt, { signal: trCtl.signal, onText: ({ text }) => { $("#outText").value = text; } });
+    st.textContent = truncated ? "الترجمة قُطعت لأن النص طويل. ترجم على أجزاء." : "تمت الترجمة";
+  } catch (e) { if (e?.text) $("#outText").value = e.text; st.textContent = sampleErr(e); }
+  finally { $("#bStopTr").hidden = true; $("#bTranslate").disabled = false; }
+}
+
+/* ───────── القراءة بصوت ───────── */
+let speaking = null;
+function speak(text, btn) {
+  const ss = window.speechSynthesis;
+  if (!ss) { toast("القراءة بصوت غير مدعومة في هذا المتصفح"); return; }
+  if (speaking) { ss.cancel(); speaking.textContent = "استماع"; const same = speaking === btn; speaking = null; if (same) return; }
+  text = text.trim(); if (!text) return;
+  const lang = AR.test(text) ? "ar" : "en";
+  const voices = ss.getVoices(); const v = voices.find(x => x.lang?.toLowerCase().startsWith(lang));
+  if (lang === "ar" && voices.length && !v) toast("لا يوجد صوت عربي في الهاتف. ثبّته من إعدادات «تحويل النص إلى كلام»", 4500);
+  const parts = text.match(/[^.!?؟\n]{1,220}[.!?؟\n]?/g) || [text];
+  btn.textContent = "إيقاف"; speaking = btn;
+  parts.forEach((p, k) => {
+    const u = new SpeechSynthesisUtterance(p); u.lang = v?.lang || (lang === "ar" ? "ar-SA" : "en-US"); if (v) u.voice = v; u.rate = 0.95;
+    if (k === parts.length - 1) u.onend = u.onerror = () => { if (speaking === btn) { btn.textContent = "استماع"; speaking = null; } };
+    ss.speak(u);
+  });
+}
+
+/* ───────── حفظ النص ───────── */
+function setSrc(t, tag) { $("#srcText").value = t; $("#srcTag").textContent = tag || ""; try { localStorage.setItem("nl_src", t); } catch (e) {} }
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast("تم النسخ"); }
+  catch (e) { const ta = document.activeElement?.tagName === "TEXTAREA" ? document.activeElement : $("#srcText"); ta.focus(); ta.select(); toast("حدد النص وانسخه يدوياً"); }
+}
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+async function docxBlob(text) {
+  const rtl = AR.test(text);
+  const paras = text.split("\n").map(l => `<w:p><w:pPr>${rtl ? "<w:bidi/><w:jc w:val=\"right\"/>" : ""}</w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${rtl ? "<w:rtl/>" : ""}<w:sz w:val="26"/><w:szCs w:val="28"/></w:rPr><w:t xml:space="preserve">${esc(l)}</w:t></w:r></w:p>`).join("");
+  const z = new JSZip();
+  z.file("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+  z.file("_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  z.file("word/document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${paras}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/>${rtl ? "<w:bidi/>" : ""}</w:sectPr></w:body></w:document>`);
+  return z.generateAsync({ type: "blob" });
+}
+async function textPdf(text) {
+  const doc = await PDFDocument.create(); const W = 595, H = 842, s = 2.5, m = 48, fs = 13, lh = fs * 1.75;
+  const rtl = AR.test(text); const font = `400 ${fs * s}px "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif`;
+  const meas = document.createElement("canvas").getContext("2d"); meas.font = font;
+  const maxW = (W - 2 * m) * s; const lines = [];
+  for (const para of text.split("\n")) {
+    if (!para.trim()) { lines.push(""); continue; }
+    let cur = ""; for (const w of para.split(/\s+/)) { const t = cur ? cur + " " + w : w; if (meas.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; } lines.push(cur);
+  }
+  const per = Math.floor((H - 2 * m) / lh);
+  for (let k = 0; k < lines.length; k += per) {
+    const c = document.createElement("canvas"); c.width = W * s; c.height = H * s; const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#111"; g.font = font; g.textBaseline = "top";
+    g.direction = rtl ? "rtl" : "ltr"; g.textAlign = rtl ? "right" : "left";
+    lines.slice(k, k + per).forEach((l, j) => g.fillText(l, rtl ? (W - m) * s : m * s, (m + j * lh) * s));
+    const img = await doc.embedPng(new Uint8Array(await (await toBlob(c, "image/png")).arrayBuffer()));
+    doc.addPage([W, H]).drawImage(img, { x: 0, y: 0, width: W, height: H });
+  }
+  return new Blob([await doc.save()]);
+}
+async function saveText(text, name) {
+  text = text.trim(); if (!text) { toast("لا يوجد نص للحفظ"); return; }
+  const fmt = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>حفظ النص</h2><div class="toolgrid">
+      <button data-f="docx"><strong>Word</strong><small>ملف .docx للتعديل</small></button>
+      <button data-f="pdf"><strong>PDF</strong><small>للمشاركة والطباعة</small></button>
+      <button data-f="txt"><strong>نص</strong><small>ملف .txt بسيط</small></button></div>`);
+    b.querySelectorAll("[data-f]").forEach(x => x.onclick = () => close(x.dataset.f));
+  });
+  if (!fmt) return;
+  busy("جاري التجهيز...");
+  try {
+    const data = fmt === "txt" ? "﻿" + text : fmt === "docx" ? await docxBlob(text) : await textPdf(text);
+    busy(); await saveFile(`${name}.${fmt}`, data);
+  } catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+
+/* ───────── تحميل المكتبات عند الحاجة فقط ───────── */
+const LIBS = {
+  mammoth: ["lib/mammoth.browser.min.js", "mammoth"],
+  xlsx: ["lib/xlsx.full.min.js", "XLSX"],
+  zxing: ["lib/zxing.min.js", "ZXing"],
+};
+const _libs = {};
+function lib(k) {
+  const [url, g] = LIBS[k];
+  if (window[g]) return Promise.resolve(window[g]);
+  return _libs[k] || (_libs[k] = new Promise((res, rej) => {
+    const s = document.createElement("script"); s.src = url;
+    s.onload = () => window[g] ? res(window[g]) : rej(new Error("load"));
+    s.onerror = () => { delete _libs[k]; rej(new Error("تعذر تحميل الأداة. تحقق من الإنترنت ثم أعد المحاولة")); };
+    document.head.append(s);
+  }));
+}
+
+/* ───────── مستندات Office ───────── */
+const O = { kind: null, name: "", wb: null, sheet: null, slides: null, slideSize: null };
+function officeShow(kind) {
+  O.kind = kind;
+  ["word", "excel", "ppt", "none"].forEach(k => $("#of-" + k).hidden = k !== kind);
+  $("#ofName").textContent = O.name || "";
+}
+async function openOffice() {
+  const [f] = await pickFiles($("#fOffice")); if (!f) return;
+  const ext = (f.name.split(".").pop() || "").toLowerCase();
+  O.name = f.name; showTab("office");
+  busy("جاري فتح الملف...");
+  try {
+    const buf = await f.arrayBuffer();
+    if (ext === "docx") await openWord(buf);
+    else if (["xlsx", "xlsm", "xls", "csv", "ods"].includes(ext)) await openExcel(buf, ext);
+    else if (ext === "pptx") await openPpt(buf);
+    else if (ext === "txt" || ext === "md") { wordHtml(new TextDecoder().decode(buf).split("\n").map(l => `<p>${esc(l) || "<br>"}</p>`).join("")); }
+    else if (ext === "doc" || ext === "ppt") toast("صيغة Word/PowerPoint القديمة غير مدعومة هنا. احفظها بصيغة docx أو pptx من برنامج Office أو من برنامج NEW LIFE على الكمبيوتر", 6000);
+    else toast("صيغة غير مدعومة: " + ext);
+  } catch (e) { console.error(e); toast("تعذر فتح الملف: " + (e.message || e)); }
+  finally { busy(); }
+}
+
+/* Word */
+function wordHtml(html) {
+  const ed = $("#wordEd"); ed.innerHTML = html || "<p><br></p>";
+  ed.querySelectorAll("p,h1,h2,h3,h4,h5,h6,li,td,th").forEach(x => x.setAttribute("dir", "auto"));
+  officeShow("word");
+}
+async function openWord(buf) {
+  const m = await lib("mammoth");
+  const r = await m.convertToHtml({ arrayBuffer: buf });
+  wordHtml(r.value);
+  if (r.messages?.some(x => x.type === "warning")) toast("فُتح الملف. قد يختلف بعض التنسيق المعقّد عن الأصل", 3500);
+}
+function newWord() { O.name = "مستند جديد.docx"; wordHtml("<h1>عنوان المستند</h1><p>ابدأ الكتابة هنا…</p>"); showTab("office"); }
+function wcmd(c, v) { $("#wordEd").focus(); document.execCommand(c, false, v ?? null); }
+const WORD_TOOLS = {
+  wB: () => wcmd("bold"), wI: () => wcmd("italic"), wU: () => wcmd("underline"),
+  wH1: () => wcmd("formatBlock", "h1"), wH2: () => wcmd("formatBlock", "h2"), wP: () => wcmd("formatBlock", "p"),
+  wR: () => wcmd("justifyRight"), wC: () => wcmd("justifyCenter"), wL: () => wcmd("justifyLeft"),
+  wUL: () => wcmd("insertUnorderedList"), wOL: () => wcmd("insertOrderedList"),
+  wUndo: () => wcmd("undo"), wRedo: () => wcmd("redo"),
+  wRed: () => wcmd("foreColor", "#b91c1c"), wBlue: () => wcmd("foreColor", "#1d4ed8"), wBlack: () => wcmd("foreColor", "#111111"),
+  wBig: () => wcmd("fontSize", "5"), wSmall: () => wcmd("fontSize", "2"),
+  wTable: () => wcmd("insertHTML", '<table><tbody>' + Array.from({ length: 3 }, () => "<tr>" + "<td dir=\"auto\"><br></td>".repeat(3) + "</tr>").join("") + "</tbody></table><p><br></p>"),
+  wImg: async () => { const [f] = await pickFiles($("#fImgs1")); if (!f) return; const j = await imageToJpeg(f, 1400); const url = "data:image/jpeg;base64," + b64(j.bytes); wcmd("insertHTML", `<img src="${url}" alt="">`); },
+};
+function b64(bytes) { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
+
+/* HTML → DOCX (فقرات، عناوين، تنسيق، قوائم، جداول، صور) */
+async function htmlToDocx(root) {
+  const media = []; let rid = 10;
+  const xmlEsc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const fontPt = { 1: 8, 2: 10, 3: 12, 4: 14, 5: 18, 6: 24, 7: 36 };
+  function runs(node, fmt, out) {
+    for (const n of node.childNodes) {
+      if (n.nodeType === 3) { const t = n.nodeValue.replace(/\s+/g, " "); if (t) out.push({ t, ...fmt }); continue; }
+      if (n.nodeType !== 1) continue;
+      const tag = n.tagName.toLowerCase(); const f = { ...fmt };
+      if (tag === "br") { out.push({ br: true }); continue; }
+      if (tag === "img") { out.push({ img: n }); continue; }
+      if (tag === "b" || tag === "strong") f.b = true;
+      if (tag === "i" || tag === "em") f.i = true;
+      if (tag === "u") f.u = true;
+      if (tag === "s" || tag === "strike") f.s = true;
+      if (tag === "sup") f.sup = true; if (tag === "sub") f.sub = true;
+      if (tag === "font") { if (n.color) f.color = n.color; if (n.size) f.pt = fontPt[n.size]; }
+      const st = n.style;
+      if (st) {
+        if (st.fontWeight && (st.fontWeight === "bold" || +st.fontWeight >= 600)) f.b = true;
+        if (st.fontStyle === "italic") f.i = true;
+        if ((st.textDecorationLine || st.textDecoration || "").includes("underline")) f.u = true;
+        if (st.color) f.color = st.color;
+      }
+      runs(n, f, out);
+    }
+  }
+  const hex = c => { if (!c) return null; if (/^#[0-9a-f]{6}$/i.test(c)) return c.slice(1); const m = c.match(/\d+/g); return m && m.length >= 3 ? m.slice(0, 3).map(v => (+v).toString(16).padStart(2, "0")).join("") : null; };
+  async function imgXml(img) {
+    const src = img.getAttribute("src") || ""; const m = src.match(/^data:(image\/(png|jpe?g|gif));base64,(.*)$/); if (!m) return "";
+    const ext = m[2] === "jpeg" ? "jpg" : m[2]; const id = "rId" + (++rid); const name = `image${rid}.${ext}`;
+    media.push({ id, name, data: m[3] });
+    const w0 = img.naturalWidth || 400, h0 = img.naturalHeight || 300; const k = Math.min(1, 600 / w0);
+    const cx = Math.round(w0 * k * 9525), cy = Math.round(h0 * k * 9525);
+    return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${rid}" name="${name}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${rid}" name="${name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+  }
+  async function para(node, opts = {}) {
+    const rs = []; runs(node, opts.fmt || {}, rs);
+    const text = rs.map(r => r.t || "").join("");
+    const rtl = AR.test(text) || (!/[A-Za-z]/.test(text) && document.documentElement.dir === "rtl");
+    const al = (node.style?.textAlign || node.getAttribute?.("align") || "").toLowerCase();
+    const jc = al === "center" ? "center" : al === "justify" ? "both" : al === "left" ? (rtl ? "right" : "left") : al === "right" ? (rtl ? "left" : "right") : null;
+    let ppr = (opts.style ? `<w:pStyle w:val="${opts.style}"/>` : "") + (rtl ? "<w:bidi/>" : "") + (jc ? `<w:jc w:val="${jc}"/>` : "") + (opts.space ? `<w:spacing w:after="${opts.space}"/>` : "");
+    let body = opts.prefix ? `<w:r><w:rPr>${rtl ? "<w:rtl/>" : ""}</w:rPr><w:t xml:space="preserve">${xmlEsc(opts.prefix)}</w:t></w:r>` : "";
+    for (const r of rs) {
+      if (r.br) { body += "<w:r><w:br/></w:r>"; continue; }
+      if (r.img) { body += await imgXml(r.img); continue; }
+      const c = hex(r.color); const pt = r.pt || opts.pt;
+      const rpr = `<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${r.b || opts.b ? "<w:b/><w:bCs/>" : ""}${r.i ? "<w:i/><w:iCs/>" : ""}${r.u ? '<w:u w:val="single"/>' : ""}${r.s ? "<w:strike/>" : ""}${c ? `<w:color w:val="${c}"/>` : ""}${pt ? `<w:sz w:val="${pt * 2}"/><w:szCs w:val="${pt * 2}"/>` : ""}${r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : ""}${rtl ? "<w:rtl/>" : ""}`;
+      body += `<w:r><w:rPr>${rpr}</w:rPr><w:t xml:space="preserve">${xmlEsc(r.t)}</w:t></w:r>`;
+    }
+    return `<w:p><w:pPr>${ppr}</w:pPr>${body}</w:p>`;
+  }
+  const HS = { h1: 20, h2: 16, h3: 14, h4: 13, h5: 12, h6: 12 };
+  async function block(n) {
+    if (n.nodeType === 3) return n.nodeValue.trim() ? `<w:p><w:r><w:t xml:space="preserve">${xmlEsc(n.nodeValue)}</w:t></w:r></w:p>` : "";
+    if (n.nodeType !== 1) return "";
+    const tag = n.tagName.toLowerCase();
+    if (HS[tag]) return para(n, { b: true, pt: HS[tag], space: 120 });
+    if (tag === "ul" || tag === "ol") { let out = "", k = 0; for (const li of n.children) { if (li.tagName.toLowerCase() !== "li") continue; out += await para(li, { prefix: tag === "ol" ? `${++k}. ` : "• " }); } return out; }
+    if (tag === "table") {
+      const trs = [...n.querySelectorAll("tr")]; const nc = Math.max(1, ...trs.map(t => t.children.length)); const cw = Math.floor(9638 / nc);
+      const rtlT = AR.test(n.textContent);
+      let out = '<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/>' + (rtlT ? "<w:bidiVisual/>" : "") + '<w:tblBorders>' + ["top", "left", "bottom", "right", "insideH", "insideV"].map(s => `<w:${s} w:val="single" w:sz="4" w:space="0" w:color="999999"/>`).join("") + "</w:tblBorders></w:tblPr><w:tblGrid>" + `<w:gridCol w:w="${cw}"/>`.repeat(nc) + "</w:tblGrid>";
+      for (const tr of trs) { out += "<w:tr>"; let k = 0; for (const td of tr.children) { k++; out += `<w:tc><w:tcPr><w:tcW w:w="${cw}" w:type="dxa"/></w:tcPr>${await para(td, { fmt: td.tagName === "TH" ? { b: true } : {} })}</w:tc>`; } for (; k < nc; k++) out += `<w:tc><w:tcPr><w:tcW w:w="${cw}" w:type="dxa"/></w:tcPr><w:p/></w:tc>`; out += "</w:tr>"; }
+      return out + "</w:tbl><w:p/>";
+    }
+    if (tag === "div" || tag === "section" || tag === "article" || tag === "blockquote") {
+      if ([...n.children].some(c => /^(p|div|h[1-6]|ul|ol|table)$/i.test(c.tagName))) { let out = ""; for (const c of n.childNodes) out += await block(c); return out; }
+      return para(n);
+    }
+    return para(n);
+  }
+  let body = ""; for (const n of root.childNodes) body += await block(n);
+  const z = new JSZip();
+  const exts = [...new Set(media.map(m => m.name.split(".").pop()))];
+  z.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>${exts.map(e => `<Default Extension="${e}" ContentType="image/${e === "jpg" ? "jpeg" : e}"/>`).join("")}<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
+  z.file("_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  z.file("word/_rels/document.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${media.map(m => `<Relationship Id="${m.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.name}"/>`).join("")}</Relationships>`);
+  media.forEach(m => z.file("word/media/" + m.name, m.data, { base64: true }));
+  const rtlDoc = AR.test(root.textContent);
+  z.file("word/document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/>${rtlDoc ? "<w:bidi/>" : ""}</w:sectPr></w:body></w:document>`);
+  return z.generateAsync({ type: "blob" });
+}
+/* HTML → PDF عبر رسم الصفحة كصورة (يحافظ على الشكل كما يظهر) */
+async function htmlToPdf(root) {
+  const W = 794, PH = 1123, M = 60;
+  const clone = root.cloneNode(true); clone.removeAttribute("contenteditable");
+  const css = `*{box-sizing:border-box}div.r{width:${W}px;padding:${M}px;background:#fff;color:#111;font:16px/1.7 "IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;direction:${document.documentElement.dir}}img{max-width:100%}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:4px 6px}h1{font-size:28px}h2{font-size:22px}`;
+  const host = document.createElement("div"); host.style.cssText = "position:fixed;left:-99999px;top:0;width:" + W + "px";
+  const inner = document.createElement("div"); inner.className = "r"; inner.append(clone);
+  const st = document.createElement("style"); st.textContent = css; host.append(st, inner); document.body.append(host);
+  await tick(); const H = Math.max(PH, inner.scrollHeight); host.remove();
+  const xml = new XMLSerializer().serializeToString(inner);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>${xml}</div></foreignObject></svg>`;
+  const img = new Image(); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); await img.decode();
+  const doc = await PDFDocument.create(); const s = 2;
+  for (let y = 0; y < H; y += PH) {
+    const c = document.createElement("canvas"); c.width = W * s; c.height = PH * s; const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, y, W, PH, 0, 0, W * s, PH * s);
+    const jb = new Uint8Array(await (await toBlob(c, "image/jpeg", 0.9)).arrayBuffer());   // يرمي خطأ إذا منع المتصفح التصدير
+    const im = await doc.embedJpg(jb); doc.addPage([595, 842]).drawImage(im, { x: 0, y: 0, width: 595, height: 842 });
+  }
+  return new Blob([await doc.save()]);
+}
+async function saveWord() {
+  const ed = $("#wordEd"); if (!ed.textContent.trim() && !ed.querySelector("img")) { toast("المستند فارغ"); return; }
+  const fmt = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>حفظ المستند</h2><div class="toolgrid">
+      <button data-f="docx"><strong>Word</strong><small>docx مع التنسيق والصور</small></button>
+      <button data-f="pdf"><strong>PDF</strong><small>كما يظهر على الشاشة</small></button>
+      <button data-f="txt"><strong>نص</strong><small>بدون تنسيق</small></button>
+      <button data-f="topdf"><strong>فتح في محرر PDF</strong><small>للتوقيع أو الختم</small></button></div>`);
+    b.querySelectorAll("[data-f]").forEach(x => x.onclick = () => close(x.dataset.f));
+  });
+  if (!fmt) return;
+  busy("جاري التجهيز...");
+  const name = baseName(O.name);
+  try {
+    if (fmt === "docx") { const blob = await htmlToDocx(ed); busy(); return saveFile(name + ".docx", blob); }
+    if (fmt === "txt") { busy(); return saveFile(name + ".txt", "﻿" + ed.innerText); }
+    let pdf;
+    try { pdf = await htmlToPdf(ed); } catch (e) { pdf = await textPdf(ed.innerText); toast("حُفظ النص بدون التنسيق الكامل", 3000); }
+    if (fmt === "topdf") { await loadBytes(new Uint8Array(await pdf.arrayBuffer()), name + ".pdf"); busy(); showTab("pdf"); return; }
+    busy(); return saveFile(name + ".pdf", pdf);
+  } catch (e) { busy(); toast("تعذر الحفظ: " + e.message); }
+}
+
+/* Excel */
+let XL = null;
+async function openExcel(buf, ext) {
+  XL = await lib("xlsx");
+  O.wb = XL.read(new Uint8Array(buf), { type: "array", cellDates: true, codepage: 65001, sheetStubs: true });
+  O.sheet = O.wb.SheetNames[0]; O.maxRows = 200; renderSheet(); officeShow("excel");
+}
+async function newExcel() {
+  showTab("office"); busy("جاري التجهيز...");
+  try { XL = await lib("xlsx"); O.wb = XL.utils.book_new(); XL.utils.book_append_sheet(O.wb, XL.utils.aoa_to_sheet([["", "", ""], ["", "", ""]]), "ورقة1"); O.sheet = "ورقة1"; O.name = "جدول جديد.xlsx"; O.maxRows = 200; renderSheet(); officeShow("excel"); }
+  catch (e) { toast(e.message); } finally { busy(); }
+}
+function renderSheet() {
+  const ws = O.wb.Sheets[O.sheet]; const ref = ws["!ref"] || "A1:C3"; const rg = XL.utils.decode_range(ref);
+  const rows = Math.max(rg.e.r + 2, 10), cols = Math.max(rg.e.c + 2, 5);
+  const showR = Math.min(rows, O.maxRows), showC = Math.min(cols, 60);
+  $("#sheetTabs").innerHTML = O.wb.SheetNames.map(n => `<button data-sh="${esc(n)}" aria-selected="${n === O.sheet}"></button>`).join("") + '<button data-sh="+" aria-label="ورقة جديدة">+</button>';
+  $$("#sheetTabs button").forEach((b, k) => { if (b.dataset.sh !== "+") b.textContent = O.wb.SheetNames[k]; b.onclick = () => { if (b.dataset.sh === "+") { const n = "ورقة" + (O.wb.SheetNames.length + 1); XL.utils.book_append_sheet(O.wb, XL.utils.aoa_to_sheet([[""]]), n); O.sheet = n; } else O.sheet = O.wb.SheetNames[k]; O.maxRows = 200; renderSheet(); }; });
+  let h = "<thead><tr><th></th>"; for (let c = 0; c < showC; c++) h += `<th>${XL.utils.encode_col(c)}</th>`; h += "</tr></thead><tbody>";
+  for (let r = 0; r < showR; r++) {
+    h += `<tr><th>${r + 1}</th>`;
+    for (let c = 0; c < showC; c++) { const cell = ws[XL.utils.encode_cell({ r, c })]; const v = !cell ? "" : (cell.f && (cell.t === "z" || cell.v === undefined)) ? "=" + cell.f : cell.t === "z" ? "" : (cell.w ?? (cell.v instanceof Date ? cell.v.toLocaleDateString() : cell.v)); h += `<td contenteditable="true" dir="auto" data-r="${r}" data-c="${c}"${cell?.t === "n" ? ' class="n"' : ""}${cell?.f ? ` title="=${esc(cell.f)}"` : ""}>${esc(String(v ?? ""))}</td>`; }
+    h += "</tr>";
+  }
+  $("#grid").innerHTML = h + "</tbody>";
+  $("#gridMore").hidden = rows <= showR;
+  $("#gridInfo").textContent = `${XL.utils.encode_range(rg)} · ${rg.e.r + 1} صف × ${rg.e.c + 1} عمود`;
+}
+function setCell(r, c, txt) {
+  const ws = O.wb.Sheets[O.sheet]; const addr = XL.utils.encode_cell({ r, c }); txt = txt.replace(/ /g, " ").trim();
+  const old = ws[addr];
+  if (!txt) { delete ws[addr]; }
+  else if (txt.startsWith("=")) ws[addr] = { t: "n", f: txt.slice(1), v: old?.v ?? 0 };
+  else if (/^-?[\d٠-٩]+([.,٫][\d٠-٩]+)?$/.test(txt)) { const n = +txt.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[,٫]/, "."); ws[addr] = { t: "n", v: n }; }
+  else ws[addr] = { t: "s", v: txt };
+  const rg = XL.utils.decode_range(ws["!ref"] || "A1"); rg.e.r = Math.max(rg.e.r, r); rg.e.c = Math.max(rg.e.c, c); ws["!ref"] = XL.utils.encode_range(rg);
+  if (ws[addr]?.f) { delete ws[addr].w; }
+}
+document.addEventListener("focusout", e => { const td = e.target.closest?.("#grid td"); if (td) setCell(+td.dataset.r, +td.dataset.c, td.innerText); });
+document.addEventListener("focusin", e => { const td = e.target.closest?.("#grid td"); if (td && td.title?.startsWith("=")) td.innerText = td.title; });
+async function saveExcel() {
+  document.activeElement?.blur();
+  const fmt = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>حفظ الجدول</h2><div class="toolgrid">
+      <button data-f="xlsx"><strong>Excel</strong><small>xlsx — كل الأوراق</small></button>
+      <button data-f="csv"><strong>CSV</strong><small>الورقة الحالية فقط</small></button></div>
+      <p class="note">الصيغ (=SUM...) تُحسب عند فتح الملف في Excel.</p>`);
+    b.querySelectorAll("[data-f]").forEach(x => x.onclick = () => close(x.dataset.f));
+  });
+  if (!fmt) return;
+  const name = baseName(O.name);
+  if (fmt === "csv") return saveFile(name + ".csv", "﻿" + XL.utils.sheet_to_csv(O.wb.Sheets[O.sheet]));
+  for (const n of O.wb.SheetNames) { const ws = O.wb.Sheets[n]; for (const k in ws) if (k[0] !== "!" && ws[k].t === "z") { if (ws[k].f) { ws[k].t = "n"; ws[k].v = 0; } else delete ws[k]; } }
+  const out = XL.write(O.wb, { bookType: "xlsx", type: "array" });
+  return saveFile(name + ".xlsx", new Blob([out]));
+}
+
+/* PowerPoint (عرض فقط) */
+async function openPpt(buf) {
+  const z = await JSZip.loadAsync(buf);
+  const pres = await z.file("ppt/presentation.xml")?.async("string"); if (!pres) throw new Error("ملف PowerPoint غير صالح");
+  const rels = await z.file("ppt/_rels/presentation.xml.rels").async("string");
+  const P = s => new DOMParser().parseFromString(s, "application/xml");
+  const pd = P(pres), rd = P(rels);
+  const sz = pd.getElementsByTagName("p:sldSz")[0]; O.slideSize = [+(sz?.getAttribute("cx") || 12192000), +(sz?.getAttribute("cy") || 6858000)];
+  const relMap = {}; for (const r of rd.getElementsByTagName("Relationship")) relMap[r.getAttribute("Id")] = r.getAttribute("Target");
+  const ids = [...pd.getElementsByTagName("p:sldId")].map(e => e.getAttribute("r:id"));
+  O.slides = [];
+  for (const id of ids) {
+    const path = "ppt/" + relMap[id].replace(/^\/?ppt\//, ""); const xml = await z.file(path)?.async("string"); if (!xml) continue;
+    const sd = P(xml); const relPath = path.replace(/slides\/(slide\d+\.xml)$/, "slides/_rels/$1.rels");
+    const srels = {}; const rx = await z.file(relPath)?.async("string"); if (rx) for (const r of P(rx).getElementsByTagName("Relationship")) srels[r.getAttribute("Id")] = r.getAttribute("Target");
+    const items = [];
+    const xf = el => { const x = el.getElementsByTagName("a:off")[0], e = el.getElementsByTagName("a:ext")[0]; return x && e ? [+x.getAttribute("x"), +x.getAttribute("y"), +e.getAttribute("cx"), +e.getAttribute("cy")] : null; };
+    for (const pic of sd.getElementsByTagName("p:pic")) {
+      const blip = pic.getElementsByTagName("a:blip")[0]; const t = blip && srels[blip.getAttribute("r:embed")]; if (!t) continue;
+      const mp = "ppt/" + t.replace(/^\.\.\//, ""); const f = z.file(mp); if (!f || !/\.(png|jpe?g|gif|bmp|webp)$/i.test(mp)) continue;
+      items.push({ img: URL.createObjectURL(await f.async("blob")), box: xf(pic) });
+    }
+    for (const sp of sd.getElementsByTagName("p:sp")) {
+      const paras = [...sp.getElementsByTagName("a:p")].map(p => ({ t: [...p.getElementsByTagName("a:t")].map(t => t.textContent).join(""), sz: +(p.getElementsByTagName("a:rPr")[0]?.getAttribute("sz") || 0) / 100, b: p.getElementsByTagName("a:rPr")[0]?.getAttribute("b") === "1" })).filter(p => p.t.trim());
+      if (paras.length) items.push({ paras, box: xf(sp), title: !!sp.getElementsByTagName("p:ph")[0]?.getAttribute("type")?.match(/title/i) });
+    }
+    O.slides.push(items);
+  }
+  renderSlides(); officeShow("ppt");
+}
+async function slideCanvas(items, w) {
+  const [SW, SH] = O.slideSize; const k = w / SW; const c = document.createElement("canvas"); c.width = w; c.height = Math.round(SH * k);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+  for (const it of items.filter(i => i.img)) {
+    const im = new Image(); im.src = it.img; try { await im.decode(); } catch (e) { continue; }
+    const [x, y, bw, bh] = it.box || [0, 0, SW, SH]; g.drawImage(im, x * k, y * k, bw * k, bh * k);
+  }
+  for (const it of items.filter(i => i.paras)) {
+    const [x, y, bw] = it.box || [SW * 0.06, SH * (it.title ? 0.06 : 0.3), SW * 0.88];
+    let yy = y * k + 4;
+    for (const p of it.paras) {
+      const fs = Math.max(9, (p.sz || (it.title ? 36 : 20)) * 12700 * k); const rtl = AR.test(p.t);
+      g.font = `${p.b || it.title ? 700 : 400} ${fs}px "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif`; g.fillStyle = "#1a1a1a"; g.textBaseline = "top";
+      g.direction = rtl ? "rtl" : "ltr"; g.textAlign = rtl ? "right" : "left";
+      let line = ""; const words = p.t.split(/\s+/); const lines = [];
+      for (const wd of words) { const t = line ? line + " " + wd : wd; if (g.measureText(t).width > bw * k - 8 && line) { lines.push(line); line = wd; } else line = t; } lines.push(line);
+      for (const l of lines) { g.fillText(l, rtl ? (x + bw) * k - 4 : x * k + 4, yy); yy += fs * 1.3; }
+    }
+  }
+  return c;
+}
+async function renderSlides() {
+  const box = $("#slides"); box.innerHTML = "";
+  if (!O.slides.length) { box.textContent = "لا توجد شرائح"; return; }
+  const w = Math.min(820, box.clientWidth || 360) * Math.min(2, window.devicePixelRatio || 1);
+  for (let i = 0; i < O.slides.length; i++) {
+    const card = document.createElement("div"); card.className = "slide";
+    const c = await slideCanvas(O.slides[i], w); card.append(c);
+    card.insertAdjacentHTML("beforeend", `<div class="cap"><span>شريحة ${i + 1} من ${O.slides.length}</span></div>`);
+    box.append(card);
+    if (i % 3 === 2) await tick();
+  }
+}
+function pptText() { return O.slides.map((s, i) => `— شريحة ${i + 1} —\n` + s.filter(x => x.paras).map(x => x.paras.map(p => p.t).join("\n")).join("\n")).join("\n\n"); }
+async function pptToPdf(open) {
+  busy("جاري التحويل إلى PDF...");
+  try {
+    const doc = await PDFDocument.create(); const [SW, SH] = O.slideSize; const PW = 842, PHh = PW * SH / SW;
+    for (let i = 0; i < O.slides.length; i++) { busy(`شريحة ${i + 1} من ${O.slides.length}...`); const c = await slideCanvas(O.slides[i], 1600); const im = await doc.embedJpg(new Uint8Array(await (await toBlob(c, "image/jpeg", 0.88)).arrayBuffer())); doc.addPage([PW, PHh]).drawImage(im, { x: 0, y: 0, width: PW, height: PHh }); }
+    const bytes = await doc.save(); busy();
+    if (open) { await loadBytes(bytes, baseName(O.name) + ".pdf"); showTab("pdf"); }
+    else await saveFile(baseName(O.name) + ".pdf", new Blob([bytes]));
+  } catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+
+/* ───────── ماسح المستندات ───────── */
+const SC = { pages: [] };   // {canvas (الناتج), src:{img, quad, rot, filter}}
+async function loadImg(file) {
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+  let src = bmp; if (!bmp) { const im = new Image(); im.src = URL.createObjectURL(file); await im.decode(); src = im; }
+  const k = Math.min(1, 2600 / Math.max(src.width, src.height));
+  const c = document.createElement("canvas"); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k);
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height); return c;
+}
+function rot90(c) { const o = document.createElement("canvas"); o.width = c.height; o.height = c.width; const g = o.getContext("2d"); g.translate(o.width, 0); g.rotate(Math.PI / 2); g.drawImage(c, 0, 0); return o; }
+/* اكتشاف حواف الورقة تلقائياً: أكبر منطقة فاتحة متصلة ثم أبعد أربع نقاط فيها */
+function detectQuad(c) {
+  const k = 280 / Math.max(c.width, c.height); const w = Math.max(8, Math.round(c.width * k)), h = Math.max(8, Math.round(c.height * k));
+  const t = document.createElement("canvas"); t.width = w; t.height = h; const g = t.getContext("2d"); g.drawImage(c, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data; const L = new Uint8Array(w * h); const hist = new Uint32Array(256);
+  for (let i = 0; i < w * h; i++) { const v = (d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11) | 0; L[i] = v; hist[v]++; }
+  let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sB = 0, wB = 0, best = 0, th = 128; for (let i = 0; i < 256; i++) { wB += hist[i]; if (!wB) continue; const wF = w * h - wB; if (!wF) break; sB += i * hist[i]; const mB = sB / wB, mF = (sum - sB) / wF; const v = wB * wF * (mB - mF) ** 2; if (v > best) { best = v; th = i; } }
+  const lab = new Int32Array(w * h).fill(-1); let bestN = 0, bestId = -1; const stack = [];
+  for (let s = 0; s < w * h; s++) {
+    if (L[s] <= th || lab[s] !== -1) continue; let n = 0; stack.push(s); lab[s] = s;
+    while (stack.length) { const p = stack.pop(); n++; const x = p % w, y = (p / w) | 0; for (const q of [x > 0 ? p - 1 : -1, x < w - 1 ? p + 1 : -1, y > 0 ? p - w : -1, y < h - 1 ? p + w : -1]) if (q >= 0 && lab[q] === -1 && L[q] > th) { lab[q] = s; stack.push(q); } }
+    if (n > bestN) { bestN = n; bestId = s; }
+  }
+  const fallback = [[0.06, 0.06], [0.94, 0.06], [0.94, 0.94], [0.06, 0.94]].map(([x, y]) => [x * c.width, y * c.height]);
+  if (bestN < w * h * 0.12 || bestN > w * h * 0.985) return fallback;
+  let tl = [0, 0, 1e9], tr = [0, 0, -1e9], br = [0, 0, -1e9], bl = [0, 0, 1e9];
+  for (let p = 0; p < w * h; p++) if (lab[p] === bestId) {
+    const x = p % w, y = (p / w) | 0;
+    if (x + y < tl[2]) tl = [x, y, x + y]; if (x + y > br[2]) br = [x, y, x + y];
+    if (x - y > tr[2]) tr = [x, y, x - y]; if (x - y < bl[2]) bl = [x, y, x - y];
+  }
+  const q = [tl, tr, br, bl].map(([x, y]) => [x / k, y / k]);
+  const area = Math.abs((q[2][0] - q[0][0]) * (q[3][1] - q[1][1]) - (q[3][0] - q[1][0]) * (q[2][1] - q[0][1])) / 2;
+  return area < c.width * c.height * 0.1 ? fallback : q;
+}
+/* تصحيح المنظور (Homography) */
+function homography(src, dst) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) { const [x, y] = dst[i], [u, v] = src[i]; A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u); A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v); }
+  for (let i = 0; i < 8; i++) { let m = i; for (let j = i + 1; j < 8; j++) if (Math.abs(A[j][i]) > Math.abs(A[m][i])) m = j; [A[i], A[m]] = [A[m], A[i]]; [b[i], b[m]] = [b[m], b[i]]; for (let j = i + 1; j < 8; j++) { const f = A[j][i] / A[i][i]; for (let k = i; k < 8; k++) A[j][k] -= f * A[i][k]; b[j] -= f * b[i]; } }
+  const h = new Array(8); for (let i = 7; i >= 0; i--) { let s = b[i]; for (let k = i + 1; k < 8; k++) s -= A[i][k] * h[k]; h[i] = s / A[i][i]; }
+  return [...h, 1];
+}
+function warp(c, q) {
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  let W = Math.max(dist(q[0], q[1]), dist(q[3], q[2])), H = Math.max(dist(q[0], q[3]), dist(q[1], q[2]));
+  const k = Math.min(1, 2200 / Math.max(W, H)); W = Math.round(W * k); H = Math.round(H * k);
+  const hm = homography(q, [[0, 0], [W, 0], [W, H], [0, H]]);
+  const sd = c.getContext("2d").getImageData(0, 0, c.width, c.height); const S0 = sd.data, sw = c.width, sh = c.height;
+  const o = document.createElement("canvas"); o.width = W; o.height = H; const od = o.getContext("2d").createImageData(W, H); const D = od.data;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const z = hm[6] * x + hm[7] * y + 1; const u = (hm[0] * x + hm[1] * y + hm[2]) / z, v = (hm[3] * x + hm[4] * y + hm[5]) / z;
+      const x0 = Math.floor(u), y0 = Math.floor(v); const di = (y * W + x) * 4;
+      if (x0 < 0 || y0 < 0 || x0 >= sw - 1 || y0 >= sh - 1) { D[di] = D[di + 1] = D[di + 2] = 255; D[di + 3] = 255; continue; }
+      const fx = u - x0, fy = v - y0; const i00 = (y0 * sw + x0) * 4, i10 = i00 + 4, i01 = i00 + sw * 4, i11 = i01 + 4;
+      for (let ch = 0; ch < 3; ch++) D[di + ch] = (S0[i00 + ch] * (1 - fx) + S0[i10 + ch] * fx) * (1 - fy) + (S0[i01 + ch] * (1 - fx) + S0[i11 + ch] * fx) * fy;
+      D[di + 3] = 255;
+    }
+  }
+  o.getContext("2d").putImageData(od, 0, 0); return o;
+}
+/* المرشحات: محسّن، رمادي، أبيض وأسود (كالماسح الضوئي) */
+function applyFilter(c, f) {
+  if (f === "orig") return c;
+  const o = document.createElement("canvas"); o.width = c.width; o.height = c.height; const g = o.getContext("2d"); g.drawImage(c, 0, 0);
+  const id = g.getImageData(0, 0, o.width, o.height); const p = id.data; const n = o.width * o.height;
+  if (f === "color") {
+    for (let ch = 0; ch < 3; ch++) { const hst = new Uint32Array(256); for (let i = 0; i < n; i++) hst[p[i * 4 + ch]]++; let a = 0, lo = 0, hi = 255; for (let v = 0; v < 256; v++) { a += hst[v]; if (a > n * 0.01) { lo = v; break; } } a = 0; for (let v = 255; v >= 0; v--) { a += hst[v]; if (a > n * 0.06) { hi = v; break; } } const sc = 255 / Math.max(1, hi - lo); for (let i = 0; i < n; i++) p[i * 4 + ch] = Math.min(255, Math.max(0, (p[i * 4 + ch] - lo) * sc)); }
+  } else {
+    const L = new Float32Array(n); for (let i = 0; i < n; i++) L[i] = p[i * 4] * 0.3 + p[i * 4 + 1] * 0.59 + p[i * 4 + 2] * 0.11;
+    if (f === "gray") { const hst = new Uint32Array(256); for (let i = 0; i < n; i++) hst[L[i] | 0]++; let a = 0, lo = 0, hi = 255; for (let v = 0; v < 256; v++) { a += hst[v]; if (a > n * 0.01) { lo = v; break; } } a = 0; for (let v = 255; v >= 0; v--) { a += hst[v]; if (a > n * 0.08) { hi = v; break; } } const sc = 255 / Math.max(1, hi - lo); for (let i = 0; i < n; i++) { const v = Math.min(255, Math.max(0, (L[i] - lo) * sc)); p[i * 4] = p[i * 4 + 1] = p[i * 4 + 2] = v; } }
+    else { // عتبة متكيفة بالصورة التكاملية
+      const W = o.width, H = o.height; const I = new Float64Array((W + 1) * (H + 1));
+      for (let y = 0; y < H; y++) { let r = 0; for (let x = 0; x < W; x++) { r += L[y * W + x]; I[(y + 1) * (W + 1) + x + 1] = I[y * (W + 1) + x + 1] + r; } }
+      const R = Math.max(8, Math.round(Math.max(W, H) / 40));
+      for (let y = 0; y < H; y++) { const y0 = Math.max(0, y - R), y1 = Math.min(H, y + R + 1); for (let x = 0; x < W; x++) { const x0 = Math.max(0, x - R), x1 = Math.min(W, x + R + 1); const s = I[y1 * (W + 1) + x1] - I[y0 * (W + 1) + x1] - I[y1 * (W + 1) + x0] + I[y0 * (W + 1) + x0]; const m = s / ((x1 - x0) * (y1 - y0)); const v = L[y * W + x] < m - 10 ? 0 : 255; const i = (y * W + x) * 4; p[i] = p[i + 1] = p[i + 2] = v; } }
+    }
+  }
+  g.putImageData(id, 0, 0); return o;
+}
+const FILTERS = [["color", "محسّن"], ["bw", "أبيض وأسود"], ["gray", "رمادي"], ["orig", "أصلي"]];
+function cropEditor(img, init) {
+  return new Promise(resolve => {
+    const st = { img, quad: init?.quad || detectQuad(img), filter: init?.filter || "color" };
+    const wrap = document.createElement("div"); wrap.className = "crop";
+    wrap.innerHTML = `<div class="crop-top gut"><button class="btn" data-x="cancel">إلغاء</button><strong>حدّد حواف الورقة</strong><button class="btn primary" data-x="ok">تم</button></div>
+      <div class="crop-stage"><canvas></canvas><svg></svg></div>
+      <div class="crop-bottom gut"><div class="scrollrow">${FILTERS.map(([k, n]) => `<button class="btn" data-f="${k}" aria-pressed="${k === st.filter}">${n}</button>`).join("")}
+      <button class="btn" data-x="rot">↻ تدوير</button><button class="btn" data-x="full">كامل الصورة</button><button class="btn" data-x="auto">تلقائي</button></div>
+      <div class="crop-hint">اسحب النقاط الأربع إلى زوايا الورقة</div></div>`;
+    document.body.append(wrap);
+    const cv = wrap.querySelector("canvas"), svg = wrap.querySelector("svg"), stage = wrap.querySelector(".crop-stage");
+    let k = 1;
+    const layout = () => {
+      const r = stage.getBoundingClientRect(); k = Math.min((r.width - 32) / st.img.width, (r.height - 32) / st.img.height);
+      cv.width = Math.round(st.img.width * k); cv.height = Math.round(st.img.height * k); cv.getContext("2d").drawImage(st.img, 0, 0, cv.width, cv.height);
+      Object.assign(svg.style, { width: cv.width + "px", height: cv.height + "px" }); svg.setAttribute("viewBox", `0 0 ${cv.width} ${cv.height}`); draw();
+    };
+    const draw = () => {
+      const q = st.quad.map(([x, y]) => [x * k, y * k]);
+      svg.innerHTML = `<polygon points="${q.map(p => p.join(",")).join(" ")}" class="qpoly"/>` + q.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="16" class="qpt" data-i="${i}"/>`).join("");
+    };
+    svg.addEventListener("pointerdown", e => {
+      const pt = e.target.closest(".qpt"); if (!pt) return; e.preventDefault(); const i = +pt.dataset.i; svg.setPointerCapture(e.pointerId);
+      const mv = ev => { const r = svg.getBoundingClientRect(); st.quad[i] = [Math.min(st.img.width, Math.max(0, (ev.clientX - r.left) / k)), Math.min(st.img.height, Math.max(0, (ev.clientY - r.top) / k))]; draw(); };
+      const up = () => { svg.removeEventListener("pointermove", mv); svg.removeEventListener("pointerup", up); };
+      svg.addEventListener("pointermove", mv); svg.addEventListener("pointerup", up);
+    });
+    wrap.addEventListener("click", e => {
+      const f = e.target.closest("[data-f]"); if (f) { st.filter = f.dataset.f; wrap.querySelectorAll("[data-f]").forEach(x => x.setAttribute("aria-pressed", x === f)); return; }
+      const x = e.target.closest("[data-x]")?.dataset.x; if (!x) return;
+      if (x === "rot") { st.img = rot90(st.img); const H0 = st.img.width; st.quad = st.quad.map(([a, b]) => [H0 - b, a]); st.quad = [st.quad[3], st.quad[0], st.quad[1], st.quad[2]]; layout(); }
+      if (x === "full") { const W = st.img.width, H = st.img.height; st.quad = [[0, 0], [W, 0], [W, H], [0, H]]; draw(); }
+      if (x === "auto") { st.quad = detectQuad(st.img); draw(); }
+      if (x === "cancel") { wrap.remove(); resolve(null); }
+      if (x === "ok") { wrap.remove(); resolve(st); }
+    });
+    requestAnimationFrame(layout);
+  });
+}
+async function processScan(st) {
+  busy("جاري تحسين الصفحة...");
+  await tick();
+  try {
+    let flat = warp(st.img, st.quad);
+    const m = Math.round(Math.min(flat.width, flat.height) * 0.008);   // قص حافة رفيعة تزيل أثر حدود الورقة
+    if (m > 1) { const o = document.createElement("canvas"); o.width = flat.width - 2 * m; o.height = flat.height - 2 * m; o.getContext("2d").drawImage(flat, -m, -m); flat = o; }
+    return applyFilter(flat, st.filter);
+  } finally { busy(); }
+}
+async function scanAdd(capture) {
+  const files = await pickFiles(capture ? $("#fCam") : $("#fImgs"));
+  for (const f of files) {
+    let img; try { img = await loadImg(f); } catch (e) { toast("تعذر قراءة الصورة"); continue; }
+    const st = await cropEditor(img); if (!st) continue;
+    SC.pages.push({ out: await processScan(st), st });
+    renderScanPages();
+  }
+}
+function renderScanPages() {
+  const box = $("#scanPages"); box.innerHTML = "";
+  $("#scanEmpty").hidden = !!SC.pages.length; $("#scanActs").hidden = !SC.pages.length;
+  SC.pages.forEach((p, i) => {
+    const el = document.createElement("div"); el.className = "scanpg";
+    const t = document.createElement("canvas"); const k = 240 / Math.max(p.out.width, p.out.height); t.width = p.out.width * k; t.height = p.out.height * k; t.getContext("2d").drawImage(p.out, 0, 0, t.width, t.height);
+    el.append(t);
+    el.insertAdjacentHTML("beforeend", `<div class="cap"><span>${i + 1}</span><span class="row" style="gap:4px">
+      <button class="mini" data-sp="edit" aria-label="تعديل">✎</button><button class="mini" data-sp="left" aria-label="قبل">→</button><button class="mini" data-sp="right" aria-label="بعد">←</button><button class="mini" data-sp="del" aria-label="حذف">×</button></span></div>`);
+    el.querySelectorAll("[data-sp]").forEach(b => b.onclick = async () => {
+      const a = b.dataset.sp;
+      if (a === "del") SC.pages.splice(i, 1);
+      if (a === "left" && i > 0) [SC.pages[i - 1], SC.pages[i]] = [SC.pages[i], SC.pages[i - 1]];
+      if (a === "right" && i < SC.pages.length - 1) [SC.pages[i + 1], SC.pages[i]] = [SC.pages[i], SC.pages[i + 1]];
+      if (a === "edit") { const st = await cropEditor(p.st.img, p.st); if (st) { p.st = st; p.out = await processScan(st); } }
+      renderScanPages();
+    });
+    box.append(el);
+  });
+}
+async function scanPdf() {
+  const doc = await PDFDocument.create();
+  for (const p of SC.pages) {
+    const jb = new Uint8Array(await (await toBlob(p.out, "image/jpeg", 0.85)).arrayBuffer()); const img = await doc.embedJpg(jb);
+    const land = p.out.width > p.out.height; const [PW, PH] = land ? [842, 595] : [595, 842];
+    const k = Math.min(PW / p.out.width, PH / p.out.height); const w = p.out.width * k, h = p.out.height * k;
+    doc.addPage([PW, PH]).drawImage(img, { x: (PW - w) / 2, y: (PH - h) / 2, width: w, height: h });
+  }
+  return doc.save();
+}
+async function scanSave() { busy("جاري إنشاء PDF..."); try { const b = await scanPdf(); busy(); await saveFile(`مسح ${new Date().toISOString().slice(0, 10)}.pdf`, new Blob([b])); } catch (e) { busy(); toast("تعذر: " + e.message); } }
+async function scanToEditor() { busy("جاري إنشاء PDF..."); try { await loadBytes(await scanPdf(), `مسح ${new Date().toISOString().slice(0, 10)}.pdf`); showTab("pdf"); toast("يمكنك الآن التوقيع أو الكتابة ثم «حفظ»"); } catch (e) { toast("تعذر: " + e.message); } finally { busy(); } }
+async function scanOcr() {
+  if (!await needSample(true)) return;
+  const max = Math.max(1, Math.min(5, caps.images?.maxCount || 1)); const pages = SC.pages.slice(0, 10); const out = [];
+  showTab("text"); const st = $("#srcStatus");
+  try {
+    for (let s = 0; s < pages.length; s += max) {
+      const chunk = pages.slice(s, s + max); st.textContent = `جاري قراءة الصفحات ${s + 1}–${s + chunk.length} من ${pages.length}…`;
+      const blobs = []; for (const p of chunk) blobs.push(await toBlob(p.out, "image/jpeg", 0.85));
+      const { text } = await caps.sample(OCR_PROMPT, { images: blobs });
+      text.split(/^\s*---\s*$/m).forEach((t, k) => out.push(pages.length > 1 ? `— صفحة ${s + k + 1} —\n${t.trim()}` : t.trim()));
+      $("#srcText").value = out.join("\n\n");
+    }
+    setSrc(out.join("\n\n"), "من المسح الضوئي"); st.textContent = "تم استخراج النص — راجعه وصحّح إن لزم";
+  } catch (e) { st.textContent = sampleErr(e); }
+}
+async function scanImages() {
+  if (SC.pages.length === 1) return saveFile("مسح.jpg", await toBlob(SC.pages[0].out, "image/jpeg", 0.9));
+  const z = new JSZip(); for (let i = 0; i < SC.pages.length; i++) z.file(`مسح_${String(i + 1).padStart(2, "0")}.jpg`, await toBlob(SC.pages[i].out, "image/jpeg", 0.9));
+  saveFile("مسح_صور.zip", await z.generateAsync({ type: "blob" }));
+}
+
+/* ───────── قراءة الباركود ───────── */
+const BC_NAMES = { qr_code: "QR", ean_13: "EAN-13", ean_8: "EAN-8", upc_a: "UPC-A", upc_e: "UPC-E", code_128: "Code 128", code_39: "Code 39", code_93: "Code 93", codabar: "Codabar", itf: "ITF", data_matrix: "Data Matrix", pdf417: "PDF417", aztec: "Aztec" };
+const ZX_NAMES = ["AZTEC", "CODABAR", "Code 39", "Code 93", "Code 128", "Data Matrix", "EAN-8", "EAN-13", "ITF", "MaxiCode", "PDF417", "QR", "RSS 14", "RSS Expanded", "UPC-A", "UPC-E", "UPC/EAN ext"];
+async function decodeBarcodes(c) {
+  const found = [];
+  if ("BarcodeDetector" in window) {
+    try {
+      const fm = await BarcodeDetector.getSupportedFormats();
+      if (fm.length) { const det = new BarcodeDetector({ formats: fm }); for (const r of await det.detect(c)) found.push({ text: r.rawValue, format: BC_NAMES[r.format] || r.format }); }
+    } catch (e) {}
+  }
+  if (found.length) return found;
+  const Z = await lib("zxing");
+  const hints = new Map(); hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  const reader = new Z.MultiFormatReader(); reader.setHints(hints);
+  const tryCanvas = cv => { try { const r = reader.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))); return { text: r.getText(), format: ZX_NAMES[r.getBarcodeFormat()] || "باركود" }; } catch (e) { return null; } finally { reader.reset(); } };
+  const scaled = s => { const k = s / Math.max(c.width, c.height); if (k >= 1) return c; const o = document.createElement("canvas"); o.width = Math.round(c.width * k); o.height = Math.round(c.height * k); o.getContext("2d").drawImage(c, 0, 0, o.width, o.height); return o; };
+  for (const cand of [scaled(1400), scaled(900), rot90(scaled(1400)), scaled(2400)]) { await tick(); const r = tryCanvas(cand); if (r) { found.push(r); break; } }
+  return found;
+}
+function bcHistory() { try { return JSON.parse(localStorage.getItem("nl_bc") || "[]"); } catch (e) { return []; } }
+function bcRemember(r) { try { const l = bcHistory().filter(x => x.text !== r.text); l.unshift({ ...r, at: Date.now() }); localStorage.setItem("nl_bc", JSON.stringify(l.slice(0, 25))); } catch (e) {} }
+function bcCard(r) {
+  const el = document.createElement("div"); el.className = "bcres";
+  const isUrl = /^https?:\/\/\S+$/i.test(r.text.trim()); const isNum = /^\d{8,14}$/.test(r.text.trim());
+  const wifi = r.text.match(/^WIFI:(.*)/i);
+  let extra = "";
+  if (wifi) { const g = k => (wifi[1].match(new RegExp(k + ":((?:\\\\.|[^;])*)")) || [])[1] || ""; extra = `<div class="kv"><span>شبكة Wi-Fi</span><b></b></div><div class="kv"><span>كلمة المرور</span><b></b></div>`; el.dataset.ssid = g("S"); el.dataset.pw = g("P"); }
+  el.innerHTML = `<div class="row" style="justify-content:space-between"><span class="chip"></span><span class="tag"></span></div><div class="bctext" dir="auto"></div>${extra}
+    <div class="row"><button class="btn" data-bc="copy">نسخ</button>${isUrl ? '<a class="btn primary" target="_blank" rel="noopener">فتح الرابط</a>' : ""}${isNum ? '<a class="btn" target="_blank" rel="noopener">البحث عن المنتج</a>' : ""}<button class="btn" data-bc="text">إلى قسم النصوص</button></div>`;
+  el.querySelector(".chip").textContent = r.format; el.querySelector(".tag").textContent = r.at ? new Date(r.at).toLocaleString("ar") : "";
+  el.querySelector(".bctext").textContent = r.text;
+  if (wifi) { const b = el.querySelectorAll(".kv b"); b[0].textContent = el.dataset.ssid; b[1].textContent = el.dataset.pw || "—"; }
+  if (isUrl) el.querySelector("a.primary").href = r.text.trim();
+  if (isNum) el.querySelectorAll("a.btn")[isUrl ? 1 : 0].href = "https://www.google.com/search?q=" + encodeURIComponent(r.text.trim());
+  el.querySelector('[data-bc="copy"]').onclick = () => copyText(wifi && el.dataset.pw ? el.dataset.pw : r.text);
+  el.querySelector('[data-bc="text"]').onclick = () => { setSrc(r.text, "من باركود " + r.format); showTab("text"); };
+  return el;
+}
+function renderBcHistory(skip = []) {
+  const box = $("#bcHist"); box.innerHTML = ""; const l = bcHistory().filter(x => !skip.includes(x.text));
+  $("#bcHistWrap").hidden = !l.length; l.forEach(r => box.append(bcCard(r)));
+}
+async function barcodeScan(capture) {
+  const [f] = await pickFiles(capture ? $("#fCam") : $("#fOcr")); if (!f) return;
+  const out = $("#bcNow"); out.innerHTML = '<div class="status">جاري القراءة…</div>';
+  try {
+    const c = await loadImg(f); const res = await decodeBarcodes(c); out.innerHTML = "";
+    if (!res.length) { out.innerHTML = '<div class="status">لم يُعثر على باركود. قرّب الكاميرا واجعل الباركود واضحاً ومستقيماً مع إضاءة جيدة.</div>'; return; }
+    res.forEach(r => { const rr = { ...r, at: Date.now() }; bcRemember(rr); out.append(bcCard(rr)); });
+    renderBcHistory(res.map(r => r.text));
+  } catch (e) { out.innerHTML = ""; toast(e.message || "تعذر القراءة"); }
+}
+function scanMode(m) {
+  $$("#scanSeg [data-m]").forEach(b => b.setAttribute("aria-selected", b.dataset.m === m));
+  $("#sc-doc").hidden = m !== "doc"; $("#sc-bc").hidden = m !== "bc";
+  if (m === "bc") renderBcHistory();
+}
+
+/* ───────── قائمة الأدوات ───────── */
+const TOOLS = [
+  ["mergeInto", "إضافة ملفات", "PDF أو صور في نهاية المستند"],
+  ["insertBlank", "صفحة فارغة", "بعد الصفحة المحددة أو في النهاية"],
+  ["pageNumbers", "ترقيم الصفحات", "1، 2، 3 أو صفحة 1 من 10"],
+  ["watermark", "علامة مائية", "نص شفاف وسط كل صفحة"],
+  ["compress", "تصغير الحجم", "لإرسال الملف بسهولة"],
+  ["splitAll", "تقسيم", "كل صفحة في ملف منفصل (zip)"],
+  ["toImages", "إلى صور JPG", "الصفحات المحددة أو كلها"],
+  ["textFromPdf", "استخراج النص", "للنسخ والترجمة والقراءة"],
+  ["ocrPdfPages", "قراءة صفحات ممسوحة", "نص من صفحات مصوّرة (حتى 5)"],
+  ["selectAll", "تحديد كل الصفحات", "للتدوير أو الحذف دفعة واحدة"],
+];
+async function tools() {
+  if (!S.bytes) { toast("افتح ملف PDF أولاً"); return; }
+  const a = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>أدوات PDF</h2><div class="toolgrid">${TOOLS.map(([k, t, d]) => `<button data-k="${k}"><strong>${t}</strong><small>${d}</small></button>`).join("")}</div>
+      <p class="note">لتدوير صفحات أو حذفها أو نقلها: ضع علامة «تحديد» تحت الصفحة.</p>`);
+    b.querySelectorAll("[data-k]").forEach(x => x.onclick = () => close(x.dataset.k));
+  });
+  if (a) ACTS[a]();
+}
+
+/* ───────── ربط الأزرار ───────── */
+const ACTS = {
+  openPdf, savePdf, undo, tools, addText, signature, imagesToPdf, insertBlank, pageNumbers, watermark, compress, splitAll, toImages,
+  textFromPdf, ocrPdfPages, ocrImage, translate,
+  mergePdf: () => mergePdf(true), mergeInto: () => mergePdf(false),
+  rotSel, delSel, extractSel, clearSel, upSel: () => moveSel(-1), downSel: () => moveSel(1),
+  selectAll: () => S.sizes.forEach((_, i) => selectPage(i, true)),
+  diagRun,
+  applyOv: applyOverlays, cancelOv, ovAll: ovAllPages, ovDate, ovEdit,
+  openOffice, newWord, newExcel, saveWord, saveExcel, ...WORD_TOOLS,
+  wordToText: () => { setSrc($("#wordEd").innerText.trim(), "من مستند: " + O.name); showTab("text"); },
+  gridMore: () => { O.maxRows += 300; renderSheet(); },
+  gridAddRow: () => { const ws = O.wb.Sheets[O.sheet]; const rg = XL.utils.decode_range(ws["!ref"] || "A1"); rg.e.r++; ws["!ref"] = XL.utils.encode_range(rg); renderSheet(); },
+  gridAddCol: () => { const ws = O.wb.Sheets[O.sheet]; const rg = XL.utils.decode_range(ws["!ref"] || "A1"); rg.e.c++; ws["!ref"] = XL.utils.encode_range(rg); renderSheet(); },
+  pptPdf: () => pptToPdf(false), pptOpenPdf: () => pptToPdf(true), pptText: () => { setSrc(pptText(), "من عرض: " + O.name); showTab("text"); },
+  goScan: () => { showTab("scan"); scanMode("doc"); }, goBarcode: () => { showTab("scan"); scanMode("bc"); },
+  scanCam: () => scanAdd(true), scanGal: () => scanAdd(false), scanSave, scanToEditor, scanOcr, scanImages,
+  scanClear: async () => { if (await confirmSheet("بدء من جديد", "حذف كل الصفحات الممسوحة؟", "حذف", true)) { SC.pages = []; renderScanPages(); } },
+  bcCam: () => barcodeScan(true), bcGal: () => barcodeScan(false),
+  bcClear: () => { try { localStorage.removeItem("nl_bc"); } catch (e) {} renderBcHistory(); $("#bcNow").innerHTML = ""; },
+  goTranslate: () => { showTab("text"); $("#trPane").scrollIntoView({ block: "start" }); },
+  goSpeak: () => { showTab("text"); },
+  stopTr: () => trCtl?.abort(),
+  speakSrc: e => speak($("#srcText").value, e.currentTarget), speakOut: e => speak($("#outText").value, e.currentTarget),
+  copySrc: () => copyText($("#srcText").value), copyOut: () => copyText($("#outText").value),
+  saveSrc: () => saveText($("#srcText").value, "نص"), saveOut: () => saveText($("#outText").value, "ترجمة"),
+  clearSrc: () => { setSrc("", ""); $("#srcStatus").textContent = ""; $("#srcText").focus(); },
+  swap: () => { const a = $("#srcText").value; setSrc($("#outText").value, "ترجمة سابقة"); $("#outText").value = a; },
+};
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  const f = ACTS[b.dataset.act]; if (f) { e.preventDefault(); f({ currentTarget: b }); }
+});
+
+/* ───────── ملف تجريبي يظهر عند أول فتح ───────── */
+async function makeSample() {
+  const doc = await PDFDocument.create(); const W = 595, H = 842, s = 2;
+  const pages = [
+    ["ملف تجريبي — NEW LIFE", "هذا ملف للتجربة فقط.", "• جرّب «نص» لكتابة سطر على الصفحة", "• أو «توقيع» لتوقّع بإصبعك", "• ضع علامة «تحديد» تحت الصفحة لتدويرها أو حذفها", "• ثم «حفظ» لحفظ الملف على هاتفك"],
+    ["الصفحة الثانية", "افتح ملفك الحقيقي بالضغط على «فتح».", "", "Invoice No. 1047 — Sample", "Total: 1,250.00 AED"],
+  ];
+  for (const lines of pages) {
+    const c = document.createElement("canvas"); c.width = W * s; c.height = H * s; const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    g.fillStyle = "#0d7a62"; g.fillRect(0, 0, c.width, 14 * s);
+    lines.forEach((l, k) => {
+      const rtl = AR.test(l); g.direction = rtl ? "rtl" : "ltr"; g.textAlign = rtl ? "right" : "left";
+      g.font = `${k ? 400 : 700} ${(k ? 15 : 24) * s}px "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif`;
+      g.fillStyle = k ? "#222" : "#0d7a62"; g.fillText(l, rtl ? (W - 56) * s : 56 * s, (90 + k * 34 + (k ? 20 : 0)) * s);
+    });
+    const img = await doc.embedPng(new Uint8Array(await (await toBlob(c, "image/png")).arrayBuffer()));
+    doc.addPage([W, H]).drawImage(img, { x: 0, y: 0, width: W, height: H });
+  }
+  return await doc.save();
+}
+
+/* ───────── فحص البرنامج ───────── */
+function diagRun() {
+  const ok = (v, a, b) => `<div>${v ? "✅" : "⚠️"} ${v ? a : b}</div>`;
+  const inApp = /; wv\)|Version\/[\d.]+ Chrome\/[\d.]+ Mobile/.test(navigator.userAgent) && !/SamsungBrowser/.test(navigator.userAgent);
+  $("#diagList").innerHTML =
+    ok(window.pdfjsLib && window.PDFLib, "أدوات PDF جاهزة", "لم تُحمَّل أدوات PDF — تحقق من الإنترنت ثم أعد فتح الصفحة") +
+    ok(window.JSZip, "أدوات Word والضغط جاهزة", "لم تُحمَّل أداة الملفات المضغوطة") +
+    ok(caps.downloads, "الحفظ على الهاتف متاح", "الحفظ غير متاح في هذا العرض") +
+    ok(caps.sample, "استخراج النص والترجمة متاحان", "استخراج النص والترجمة غير متاحين هنا") +
+    ok(!inApp, "تعمل داخل متصفح", "يبدو أن الصفحة تعمل داخل تطبيق؛ إن لم تفتح الملفات جرّب فتحها من متصفح Chrome");
+}
+document.addEventListener("change", e => {
+  if (e.target.id !== "fTest") return;
+  const f = e.target.files?.[0];
+  $("#diagFile").textContent = f ? `✅ فتح الملفات يعمل: ${f.name} (${(f.size / 1024).toFixed(0)} كيلوبايت)` : "⚠️ لم يُختر ملف";
+});
+
+
+/* ═══════════════════ نسخة أندرويد: الربط بقدرات الهاتف ═══════════════════
+   هذه الدوال تحلّ محل نظيراتها في نسخة الويب (آخر تعريف للدالة هو المعتمد). */
+const NL = window.Android || null;
+window.NLNative = window.NLNative || { cbs: {}, n: 0, done(id, ok, payload) { const c = this.cbs[id]; delete this.cbs[id]; if (c) ok ? c.res(payload) : c.rej(new Error(payload || "خطأ")); } };
+function native(method, args = []) {
+  return new Promise((res, rej) => {
+    if (!NL) return rej(new Error("هذه الميزة تعمل داخل تطبيق NEW LIFE فقط"));
+    const id = "c" + (++NLNative.n); NLNative.cbs[id] = { res, rej };
+    try { NL[method](...args, id); } catch (e) { delete NLNative.cbs[id]; rej(e); }
+  });
+}
+async function putBlob(data, ext) {
+  const blob = data instanceof Blob ? data : new Blob([data]);
+  const tok = NL.begin(ext || "bin"); const CH = 786432;
+  for (let o = 0; o < blob.size; o += CH) {
+    const b64 = await new Promise((r, j) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(",")[1] || ""); fr.onerror = j; fr.readAsDataURL(blob.slice(o, o + CH)); });
+    NL.chunk(tok, b64);
+  }
+  return tok;
+}
+async function fetchBlob(url) { const r = await fetch(url); if (!r.ok) throw new Error("تعذر قراءة الملف"); return r.blob(); }
+const MIMES = { pdf: "application/pdf", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation", csv: "text/csv", txt: "text/plain", zip: "application/zip", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+  doc: "application/msword", xls: "application/vnd.ms-excel", ppt: "application/vnd.ms-powerpoint", nlenc: "application/octet-stream", html: "text/html" };
+const extOf = n => (String(n).split(".").pop() || "").toLowerCase();
+const mimeOf = n => MIMES[extOf(n)] || "application/octet-stream";
+
+/* الحفظ: نافذة «حفظ باسم» في أندرويد (تختار المجلد بنفسك) */
+async function saveFile(filename, data) {
+  if (!NL) { toast("الحفظ يعمل داخل التطبيق"); return false; }
+  busy("جاري التجهيز...");
+  try {
+    const blob = typeof data === "string" ? new Blob([data], { type: "text/plain" }) : data instanceof Blob ? data : new Blob([data]);
+    const tok = await putBlob(blob, extOf(filename)); busy();
+    const saved = await native("saveAs", [tok, filename, mimeOf(filename)]);
+    toast("تم الحفظ: " + saved); return true;
+  } catch (e) { busy(); if (e.message !== "declined") toast("تعذر الحفظ: " + e.message); return false; }
+}
+async function shareFile(filename, data) {
+  busy("جاري التجهيز...");
+  try { const tok = await putBlob(data instanceof Blob ? data : new Blob([data]), extOf(filename)); NL.share(tok, filename, mimeOf(filename)); }
+  catch (e) { toast("تعذرت المشاركة: " + e.message); } finally { busy(); }
+}
+async function openWithOther(file) {
+  busy("جاري التجهيز...");
+  try { const tok = await putBlob(file, extOf(file.name)); NL.openWith(tok, file.name, file.type || mimeOf(file.name)); }
+  catch (e) { toast(e.message); } finally { busy(); }
+}
+async function sharePdf() { if (!S.bytes) return; if (S.overlays.length) await applyOverlays(); await shareFile(baseName(S.name) + ".pdf", new Blob([S.bytes])); }
+
+/* كلمة مرور */
+function passwordSheet(title, text, confirm = false, extra = "") {
+  return sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2></h2><p class="lead"></p>
+      <label class="field"><span>كلمة المرور</span><input type="password" id="pw1" autocomplete="off"></label>
+      ${confirm ? '<label class="field"><span>تأكيد كلمة المرور</span><input type="password" id="pw2" autocomplete="off"></label>' : ""}
+      <label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="pwShow" style="width:20px;height:20px">إظهار كلمة المرور</label>${extra}
+      <div class="acts"><button class="btn" data-v="0">إلغاء</button><button class="btn primary" data-v="1">متابعة</button></div>`);
+    b.querySelector("h2").textContent = title; b.querySelector("p").textContent = text;
+    $("#pwShow", b).onchange = e => b.querySelectorAll("input[type=password],input.pw").forEach(i => { i.type = e.target.checked ? "text" : "password"; i.classList.add("pw"); });
+    setTimeout(() => $("#pw1", b).focus(), 60);
+    b.querySelector('[data-v="0"]').onclick = () => close(null);
+    b.querySelector('[data-v="1"]').onclick = () => {
+      const p = $("#pw1", b).value;
+      if (p.length < 4) { toast("كلمة المرور 4 أحرف على الأقل"); return; }
+      if (confirm && p !== $("#pw2", b).value) { toast("كلمتا المرور غير متطابقتين"); return; }
+      close({ pw: p, print: $("#allowPrint", b)?.checked ?? true, copy: $("#allowCopy", b)?.checked ?? false });
+    };
+  });
+}
+
+/* ───────── فتح الملفات من أي مكان ───────── */
+async function openPdf() { const [f] = await pickFiles($("#fPdf")); if (f) await openPdfFile(f); }
+async function openPdfFile(f) {
+  busy("جاري فتح الملف...");
+  let bytes;
+  try { bytes = new Uint8Array(await f.arrayBuffer()); await loadBytes(bytes, f.name); showTab("pdf"); }
+  catch (e) {
+    busy();
+    if (e?.name === "PasswordException") return unlockAndOpen(bytes, f.name);
+    toast("تعذر فتح الملف: " + (e.message || e));
+  } finally { busy(); }
+}
+async function unlockAndOpen(bytes, name) {
+  const r = await passwordSheet("الملف محمي بكلمة مرور", "أدخل كلمة المرور لفتح الملف وتعديله.");
+  if (!r) return;
+  busy("جاري فك الحماية...");
+  try {
+    const url = await native("pdfUnlock", [await putBlob(bytes, "pdf"), r.pw]);
+    await loadBytes(new Uint8Array(await (await fetchBlob(url)).arrayBuffer()), name); showTab("pdf");
+    toast("فُتح الملف. سيُحفظ بدون كلمة مرور إلا إذا حميته من جديد", 4500);
+  } catch (e) { toast(e.message); } finally { busy(); }
+}
+async function openOffice() { const [f] = await pickFiles($("#fOffice")); if (f) await openOfficeFile(f); }
+function rtfToText(s) {
+  const cp = /\\ansicpg1256/.test(s) ? "windows-1256" : "windows-1252"; let dec; try { dec = new TextDecoder(cp); } catch (e) { dec = new TextDecoder(); }
+  s = s.replace(/\{\\\*[^{}]*\}/g, "").replace(/\{\\(fonttbl|colortbl|stylesheet|info)[\s\S]*?\}\s*\}/g, "");
+  s = s.replace(/\\u(-?\d+)\??/g, (_, n) => String.fromCharCode((+n + 65536) % 65536));
+  s = s.replace(/(\\'[0-9a-f]{2})+/gi, m => dec.decode(new Uint8Array(m.split("\\'").filter(Boolean).map(h => parseInt(h, 16)))));
+  return s.replace(/\\(par|line)\b ?/g, "\n").replace(/\\tab\b ?/g, "\t").replace(/\\[a-z]+-?\d* ?/gi, "").replace(/[{}]/g, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+async function openOfficeFile(f) {
+  const ext = extOf(f.name);
+  O.name = f.name; showTab("office");
+  busy("جاري فتح الملف...");
+  try {
+    const buf = await f.arrayBuffer();
+    if (ext === "docx" || ext === "dotx") await openWord(buf);
+    else if (["xlsx", "xlsm", "xls", "xlt", "csv", "ods", "et", "ett"].includes(ext)) await openExcel(buf, ext);
+    else if (ext === "pptx" || ext === "ppsx" || ext === "potx") await openPpt(buf);
+    else if (ext === "rtf") wordHtml(rtfToText(new TextDecoder("latin1").decode(buf)).split("\n").map(l => `<p>${esc(l) || "<br>"}</p>`).join(""));
+    else if (["txt", "md", "log", "json", "xml"].includes(ext)) wordHtml(new TextDecoder().decode(buf).split("\n").map(l => `<p>${esc(l) || "<br>"}</p>`).join(""));
+    else throw new Error("legacy");
+  } catch (e) {
+    busy(); console.error(e);
+    const legacy = ["doc", "wps", "wpt", "ppt", "pps", "dps", "dpt", "dot"].includes(ext) || e.message === "legacy";
+    const go = await confirmSheet(legacy ? "صيغة قديمة" : "تعذر فتح الملف",
+      legacy ? `صيغة .${ext} القديمة (Word 97 / WPS) لا تُعدَّل داخل NEW LIFE. يمكنك فتحه بتطبيق آخر، أو حفظه من WPS أو Office بصيغة docx أو xlsx أو pptx ثم فتحه هنا.`
+             : `لم يتمكن NEW LIFE من قراءة هذا الملف (${e.message}). هل تريد فتحه بتطبيق آخر؟`, "فتح بتطبيق آخر");
+    if (go) openWithOther(f);
+    officeShow("none");
+  } finally { busy(); }
+}
+async function openAnyFile(f) {
+  const ext = extOf(f.name);
+  if (ext === "pdf" || f.type === "application/pdf") return openPdfFile(f);
+  if (ext === "nlenc") return decryptFlow(f);
+  if (["docx", "dotx", "xlsx", "xlsm", "xls", "xlt", "csv", "ods", "et", "ett", "pptx", "ppsx", "potx", "rtf", "txt", "md", "log", "json", "xml", "doc", "dot", "wps", "wpt", "ppt", "pps", "dps", "dpt"].includes(ext)) return openOfficeFile(f);
+  if (f.type.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "gif", "bmp", "heic"].includes(ext)) {
+    const what = await sheet((b, close) => {
+      b.insertAdjacentHTML("beforeend", `<h2>صورة</h2><div class="toolgrid">
+        <button data-f="scan"><strong>مسح كمستند</strong><small>قصّ الحواف وتحسين الوضوح</small></button>
+        <button data-f="pdf"><strong>تحويل إلى PDF</strong><small>للتوقيع أو الإرسال</small></button>
+        <button data-f="ocr"><strong>استخراج النص</strong><small>عربي وإنجليزي</small></button>
+        <button data-f="bc"><strong>قراءة باركود</strong><small>QR وغيره</small></button></div>`);
+      b.querySelectorAll("[data-f]").forEach(x => x.onclick = () => close(x.dataset.f));
+    });
+    if (what === "scan") { showTab("scan"); scanMode("doc"); const img = await loadImg(f); const st = await cropEditor(img); if (st) { SC.pages.push({ out: await processScan(st), st }); renderScanPages(); } }
+    if (what === "pdf") { busy("جاري التحويل..."); try { const d = await PDFDocument.create(); await addImagePage(d, f); await loadBytes(await d.save(), baseName(f.name) + ".pdf"); showTab("pdf"); } finally { busy(); } }
+    if (what === "ocr") ocrFiles([f]);
+    if (what === "bc") { showTab("scan"); scanMode("bc"); showBarcodes(await decodeBarcodes(await loadImg(f))); }
+    return;
+  }
+  if (await confirmSheet("صيغة غير مدعومة", `لا يفتح NEW LIFE ملفات .${ext}. هل تريد فتحه بتطبيق آخر؟`, "فتح بتطبيق آخر")) openWithOther(f);
+}
+async function openAny() { const [f] = await pickFiles($("#fAny")); if (f) await openAnyFile(f); }
+window.NL_openExternal = async o => {
+  try {
+    if (o.text) { setSrc(o.text, "نص مُشارك"); showTab("text"); return; }
+    const blob = await fetchBlob(o.url);
+    await openAnyFile(new File([blob], o.name || "ملف", { type: o.mime || blob.type || "" }));
+  } catch (e) { toast("تعذر فتح الملف: " + e.message); }
+};
+
+/* ───────── قراءة النصوص على الهاتف (دون إنترنت) ───────── */
+async function needSample() { return !!NL; }
+async function runOcr(blobs) {
+  const toks = []; for (const b of blobs) toks.push(await putBlob(b, "jpg"));
+  return String(await native("ocr", [JSON.stringify(toks)])).split(/\n---\n/);
+}
+async function ocrFiles(files) {
+  showTab("text"); const st = $("#srcStatus"); st.textContent = "جاري قراءة النص… (العربية قد تستغرق بضع ثوانٍ)";
+  try {
+    const blobs = []; for (const f of files) { const j = await imageToJpeg(f, 2600); blobs.push(new Blob([j.bytes], { type: "image/jpeg" })); }
+    const parts = await runOcr(blobs);
+    setSrc(parts.map(t => t.trim()).join("\n\n"), "من صورة: " + files.map(f => f.name).join("، "));
+    st.textContent = "تم استخراج النص — راجعه وصحّح إن لزم";
+  } catch (e) { st.textContent = "تعذر: " + e.message; }
+}
+async function ocrImage() { const files = await pickFiles($("#fOcr")); if (files.length) ocrFiles(files); }
+async function ocrPdfPages() {
+  if (!S.pdf) return;
+  const idx = (S.sel.size ? selList() : S.sizes.map((_, i) => i)).slice(0, 20);
+  showTab("text"); const st = $("#srcStatus"); const out = [];
+  try {
+    for (let k = 0; k < idx.length; k++) {
+      st.textContent = `جاري قراءة الصفحة ${idx[k] + 1} (${k + 1} من ${idx.length})…`;
+      const c = await renderToCanvas(idx[k], 2.2); const [t] = await runOcr([await toBlob(c, "image/jpeg", 0.9)]); c.width = c.height = 0;
+      out.push(`— صفحة ${idx[k] + 1} —\n${t.trim()}`); $("#srcText").value = out.join("\n\n");
+    }
+    setSrc(out.join("\n\n"), "من ملف: " + S.name);
+    st.textContent = idx.length < S.sizes.length && !S.sel.size ? `تمت قراءة أول ${idx.length} صفحة. حدد صفحات أخرى في قسم PDF ثم أعد.` : "تم استخراج النص";
+  } catch (e) { st.textContent = "تعذر: " + e.message; }
+}
+async function scanOcr() {
+  showTab("text"); const st = $("#srcStatus"); const out = []; const pages = SC.pages.slice(0, 30);
+  try {
+    for (let k = 0; k < pages.length; k++) {
+      st.textContent = `جاري قراءة الصفحة ${k + 1} من ${pages.length}…`;
+      const [t] = await runOcr([await toBlob(pages[k].out, "image/jpeg", 0.9)]);
+      out.push(pages.length > 1 ? `— صفحة ${k + 1} —\n${t.trim()}` : t.trim()); $("#srcText").value = out.join("\n\n");
+    }
+    setSrc(out.join("\n\n"), "من المسح الضوئي"); st.textContent = "تم استخراج النص — راجعه وصحّح إن لزم";
+  } catch (e) { st.textContent = "تعذر: " + e.message; }
+}
+
+/* ───────── الترجمة على الهاتف ───────── */
+const LANG_TAGS = { Arabic: "ar", English: "en", French: "fr", Turkish: "tr", Urdu: "ur", Hindi: "hi", Persian: "fa", Spanish: "es", German: "de", Russian: "ru", "Chinese (Simplified)": "zh", Malayalam: "ml", Bengali: "bn", Tagalog: "tl" };
+async function translate() {
+  const src = $("#srcText").value.trim(); if (!src) { $("#srcText").focus(); return; }
+  const st = $("#trStatus"); $("#bTranslate").disabled = true;
+  st.textContent = "جاري الترجمة… (أول مرة لكل لغة يُنزَّل ملفها مرة واحدة، حوالي 30 ميجابايت)";
+  try { $("#outText").value = await native("translate", [src, LANG_TAGS[$("#trLang").value] || "en"]); st.textContent = "تمت الترجمة على هاتفك"; }
+  catch (e) { st.textContent = "تعذرت الترجمة: " + e.message + (/download|network|internet/i.test(e.message) ? " — يلزم إنترنت لتنزيل ملف اللغة أول مرة" : ""); }
+  finally { $("#bTranslate").disabled = false; }
+}
+
+/* ───────── القراءة بصوت ───────── */
+let nlSpeaking = null;
+function speak(text, btn) {
+  if (nlSpeaking) { NL.stopSpeak(); nlSpeaking.textContent = "استماع"; const same = nlSpeaking === btn; nlSpeaking = null; if (same) return; }
+  text = (text || "").trim(); if (!text) return;
+  NL.speak(text); btn.textContent = "إيقاف"; nlSpeaking = btn;
+}
+window.NL_speakDone = () => { if (nlSpeaking) { nlSpeaking.textContent = "استماع"; nlSpeaking = null; } };
+
+/* ───────── الماسح الذكي والباركود المباشر ───────── */
+async function smartScan() {
+  try {
+    const r = JSON.parse(await native("docScan"));
+    busy("جاري إضافة الصفحات...");
+    for (const u of r.images || []) { const c = await loadImg(await fetchBlob(u)); SC.pages.push({ out: c, st: { img: c, quad: [[0, 0], [c.width, 0], [c.width, c.height], [0, c.height]], filter: "orig" } }); }
+    busy(); renderScanPages(); showTab("scan"); scanMode("doc");
+    toast(`أضيفت ${(r.images || []).length} صفحة`);
+  } catch (e) {
+    busy();
+    if (e.message !== "cancel") { toast("الماسح الذكي غير متاح في هذا الهاتف — استخدم «تصوير صفحة»", 4500); }
+  }
+}
+function showBarcodes(res) {
+  const out = $("#bcNow"); out.innerHTML = "";
+  if (!res.length) { out.innerHTML = '<div class="status">لم يُعثر على باركود. قرّب الكاميرا واجعل الباركود واضحاً مع إضاءة جيدة.</div>'; return; }
+  res.forEach(r => { const rr = { ...r, at: Date.now() }; bcRemember(rr); out.append(bcCard(rr)); });
+  renderBcHistory(res.map(r => r.text));
+}
+async function bcLive() {
+  try { showBarcodes(JSON.parse(await native("barcodeLive"))); }
+  catch (e) { if (e.message !== "cancel") toast(e.message); }
+}
+
+
+/* قراءة الباركود من صورة: محرك الهاتف (ML Kit) أولاً، ثم القارئ الاحتياطي */
+async function decodeBarcodes(c) {
+  try {
+    const tok = await putBlob(await toBlob(c, "image/jpeg", 0.95), "jpg");
+    const res = JSON.parse(await native("barcodeImage", [tok]));
+    if (res.length) return res;
+  } catch (e) { console.warn(e); }
+  const Z = await lib("zxing");
+  const hints = new Map(); hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  const reader = new Z.MultiFormatReader(); reader.setHints(hints);
+  const tryCanvas = cv => { try { const r = reader.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))); return { text: r.getText(), format: ZX_NAMES[r.getBarcodeFormat()] || "باركود" }; } catch (e) { return null; } finally { reader.reset(); } };
+  const scaled = s => { const k = s / Math.max(c.width, c.height); if (k >= 1) return c; const o = document.createElement("canvas"); o.width = Math.round(c.width * k); o.height = Math.round(c.height * k); o.getContext("2d").drawImage(c, 0, 0, o.width, o.height); return o; };
+  for (const cand of [scaled(1400), scaled(900), rot90(scaled(1400)), scaled(2400)]) { await tick(); const r = tryCanvas(cand); if (r) return [r]; }
+  return [];
+}
+
+/* ───────── التشفير والحماية ───────── */
+async function pdfLockFlow(useCurrent) {
+  let bytes, name;
+  if (useCurrent && S.bytes) { if (S.overlays.length) await applyOverlays(); bytes = S.bytes; name = S.name; }
+  else { const [f] = await pickFiles($("#fPdf")); if (!f) return; bytes = new Uint8Array(await f.arrayBuffer()); name = f.name; }
+  const r = await passwordSheet("حماية PDF بكلمة مرور", "لن يُفتح الملف إلا بكلمة المرور (تشفير AES-256). احفظ كلمة المرور جيداً؛ لا يمكن استرجاعها.", true,
+    `<label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="allowPrint" checked style="width:20px;height:20px">السماح بالطباعة</label>
+     <label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="allowCopy" style="width:20px;height:20px">السماح بنسخ النص</label>`);
+  if (!r) return;
+  busy("جاري التشفير...");
+  try {
+    const url = await native("pdfLock", [await putBlob(bytes, "pdf"), r.pw, "", r.print, r.copy]);
+    const blob = await fetchBlob(url); busy();
+    await saveFile(baseName(name) + "_محمي.pdf", blob);
+  } catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+async function pdfUnlockFlow() {
+  const [f] = await pickFiles($("#fPdf")); if (!f) return;
+  const r = await passwordSheet("إزالة كلمة المرور", "أدخل كلمة المرور الحالية للملف. سيُحفظ نسخة بدون حماية."); if (!r) return;
+  busy("جاري فك الحماية...");
+  try { const url = await native("pdfUnlock", [await putBlob(f, "pdf"), r.pw]); const blob = await fetchBlob(url); busy(); await saveFile(baseName(f.name) + "_بدون_حماية.pdf", blob); }
+  catch (e) { busy(); toast(e.message); }
+}
+async function encryptFlow() {
+  const [f] = await pickFiles($("#fAny")); if (!f) return;
+  const r = await passwordSheet("تشفير ملف", `سيُشفَّر «${f.name}» بكلمة مرور (AES-256) ويُحفظ كملف .nlenc لا يفتحه إلا NEW LIFE مع كلمة المرور.`, true); if (!r) return;
+  busy("جاري التشفير...");
+  try { const url = await native("encryptFile", [await putBlob(f, extOf(f.name)), f.name, r.pw]); const blob = await fetchBlob(url); busy(); await saveFile(f.name + ".nlenc", blob); }
+  catch (e) { busy(); toast("تعذر: " + e.message); }
+}
+async function decryptFlow(file) {
+  const f = file || (await pickFiles($("#fAny")))[0]; if (!f) return;
+  const r = await passwordSheet("فك تشفير ملف", `أدخل كلمة المرور لفتح «${f.name}».`); if (!r) return;
+  busy("جاري فك التشفير...");
+  try {
+    const res = JSON.parse(await native("decryptFile", [await putBlob(f, "nlenc"), r.pw]));
+    const blob = await fetchBlob(res.url); busy();
+    const what = await sheet((b, close) => {
+      b.insertAdjacentHTML("beforeend", `<h2>تم فك التشفير</h2><p class="lead"></p><div class="acts"><button class="btn" data-v="save">حفظ الملف الأصلي</button><button class="btn primary" data-v="open">فتح في NEW LIFE</button></div>`);
+      b.querySelector("p").textContent = res.name;
+      b.querySelectorAll("[data-v]").forEach(x => x.onclick = () => close(x.dataset.v));
+    });
+    if (what === "save") await saveFile(res.name, blob);
+    if (what === "open") await openAnyFile(new File([blob], res.name, { type: mimeOf(res.name) }));
+  } catch (e) { busy(); toast(e.message); }
+}
+async function securityMenu() {
+  const a = await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>التشفير والحماية</h2><div class="toolgrid">
+      <button data-k="lock"><strong>حماية PDF</strong><small>كلمة مرور للفتح (AES-256)</small></button>
+      <button data-k="unlock"><strong>إزالة حماية PDF</strong><small>بكلمة المرور الحالية</small></button>
+      <button data-k="enc"><strong>تشفير أي ملف</strong><small>Word، Excel، صور، أي ملف</small></button>
+      <button data-k="dec"><strong>فك تشفير</strong><small>ملفات .nlenc</small></button></div>
+      <p class="note">التشفير يتم داخل هاتفك فقط. إن نسيت كلمة المرور فلا يمكن استرجاع الملف.</p>`);
+    b.querySelectorAll("[data-k]").forEach(x => x.onclick = () => close(x.dataset.k));
+  });
+  if (a === "lock") pdfLockFlow(false);
+  if (a === "unlock") pdfUnlockFlow();
+  if (a === "enc") encryptFlow();
+  if (a === "dec") decryptFlow();
+}
+
+
+/* ───────── التحديث التلقائي ومشاركة التطبيق مع جهاز آخر ───────── */
+function appInfo() { try { return JSON.parse(NL.appInfo()); } catch (e) { return { code: 0, name: "?", repo: "" }; } }
+let nlUpdating = false;
+window.NL_updateProgress = p => { if (nlUpdating) busy(`جاري تنزيل التحديث ${p}%`); };
+async function checkUpdate(silent) {
+  try {
+    if (!silent) busy("جاري التحقق من التحديثات...");
+    const u = JSON.parse(await native("checkUpdate"));
+    busy();
+    try { localStorage.setItem("nl_upd_check", String(Date.now())); } catch (e) {}
+    showUpdateBanner(u.available ? u : null);
+    if (!silent) toast(u.available ? `يوجد إصدار جديد ${u.tag}` : `لديك أحدث إصدار (${u.currentName})`);
+    return u;
+  } catch (e) { busy(); if (!silent) toast("تعذر التحقق: " + e.message); return null; }
+}
+function showUpdateBanner(u) {
+  $("#updBanner")?.remove(); if (!u) return;
+  const mb = u.size ? ` · ${(u.size / 1048576).toFixed(0)} ميجابايت` : "";
+  $("#v-home").insertAdjacentHTML("afterbegin", `<div class="pane" id="updBanner" style="border-color:var(--accent)">
+    <header><h2>تحديث جديد متاح</h2><span class="tag"></span></header>
+    <p class="lead" style="margin:0">ثبّته الآن ليحصل التطبيق على آخر التحسينات. لن تُحذف ملفاتك أو توقيعاتك المحفوظة.</p>
+    <div class="row"><button class="btn primary" data-act="doUpdate">تحديث الآن</button><button class="btn" data-act="hideUpdate">لاحقاً</button></div></div>`);
+  $("#updBanner .tag").textContent = u.tag + mb;
+  $("#updBanner").dataset.url = u.url;
+}
+async function doUpdate() {
+  const url = $("#updBanner")?.dataset.url; if (!url) return checkUpdate(false);
+  busy("جاري تنزيل التحديث 0%"); nlUpdating = true;
+  try { await native("installUpdate", [url]); nlUpdating = false; busy(); toast("اضغط «تحديث» في نافذة أندرويد", 5000); }
+  catch (e) {
+    nlUpdating = false; busy();
+    if (e.message === "need_permission") {
+      await confirmSheet("خطوة لمرة واحدة", "فعّل «السماح من هذا المصدر» لتطبيق NEW LIFE في النافذة التي فُتحت، ثم ارجع واضغط «تحديث الآن» مرة أخرى.", "حسناً");
+    } else toast("تعذر التحديث: " + e.message);
+  }
+}
+function qrCanvas(text, px = 260) {
+  const Z = window.ZXing; const h = new Map(); h.set(Z.EncodeHintType.MARGIN, 2);
+  const m = new Z.QRCodeWriter().encode(text, Z.BarcodeFormat.QR_CODE, 0, 0, h);
+  const n = m.getWidth(), k = Math.floor(px / n); const c = document.createElement("canvas"); c.width = c.height = n * k;
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (m.get(x, y)) g.fillRect(x * k, y * k, k, k);
+  return c;
+}
+async function shareAppMenu() {
+  const info = appInfo(); const link = `https://github.com/${info.repo}/releases/latest`;
+  try { await lib("zxing"); } catch (e) {}
+  await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>تثبيت NEW LIFE على جهاز آخر</h2>
+      <div class="toolgrid"><button data-k="send"><strong>إرسال التطبيق</strong><small>عبر واتساب أو Quick Share أو البلوتوث</small></button>
+      <button data-k="open"><strong>صفحة التنزيل</strong><small>فتح رابط آخر إصدار</small></button></div>
+      <p class="lead" style="margin:0">أو امسح هذا الرمز بكاميرا الهاتف الآخر أو التابلت لتنزيل آخر إصدار:</p>
+      <div id="qrBox" style="display:grid;place-items:center;background:#fff;border-radius:12px;padding:12px"></div>
+      <div class="row" style="justify-content:space-between"><code dir="ltr" style="font-size:12px;overflow-wrap:anywhere"></code><button class="btn" data-k="copy">نسخ الرابط</button></div>
+      <p class="note">الإصدار المثبت: ${esc(info.name)}. بعد تثبيته على الجهاز الآخر، يحدّث نفسه تلقائياً مثل هذا الجهاز.</p>
+      <div class="acts"><button class="btn" data-k="close">إغلاق</button></div>`);
+    b.querySelector("code").textContent = link;
+    try { $("#qrBox", b).append(qrCanvas(link)); } catch (e) { $("#qrBox", b).textContent = "تعذر إنشاء الرمز"; }
+    b.querySelectorAll("[data-k]").forEach(x => x.onclick = () => {
+      const k = x.dataset.k;
+      if (k === "send") NL.shareApp();
+      if (k === "open") NL.openUrl(link);
+      if (k === "copy") copyText(link);
+      if (k === "close") close(null);
+    });
+  });
+}
+
+/* ───────── زر الرجوع في الهاتف ───────── */
+window.NL_back = () => {
+  if (busyEl) return true;
+  const crop = $(".crop"); if (crop) { crop.querySelector('[data-x="cancel"]')?.click(); return true; }
+  const scrim = $(".scrim"); if (scrim) { scrim.dispatchEvent(new MouseEvent("click", { bubbles: true })); return true; }
+  if (S.placing || S.overlays.length) { cancelOv(); return true; }
+  if (curTab && curTab !== "home") { showTab("home"); return true; }
+  return false;
+};
+
+/* ───────── فحص البرنامج ───────── */
+function diagRun() {
+  const ok = (v, a, b) => `<div>${v ? "✅" : "⚠️"} ${v ? a : b}</div>`;
+  $("#diagList").innerHTML =
+    ok(window.pdfjsLib && window.PDFLib, "أدوات PDF جاهزة", "لم تُحمَّل أدوات PDF") +
+    ok(window.JSZip, "أدوات Word وExcel جاهزة", "لم تُحمَّل أدوات المستندات") +
+    ok(NL, "متصل بقدرات الهاتف: الحفظ، الكاميرا، قراءة النصوص، الترجمة، التشفير", "يعمل خارج التطبيق") +
+    '<div>ℹ️ لا يحتاج حساباً ولا اشتراكاً. الترجمة تحتاج إنترنت أول مرة فقط لتنزيل ملف كل لغة.</div>' +
+    (NL ? `<div>📦 الإصدار المثبت: ${esc(appInfo().name)} <button class="btn" data-act="checkUpdateNow" style="margin-inline-start:8px">التحقق من التحديثات</button></div>` : "");
+}
+
+/* ───────── إضافات الواجهة ───────── */
+(function androidUi() {
+  if (!NL) return;
+  document.body.insertAdjacentHTML("beforeend", '<input type="file" id="fAny" class="sr">');
+  // الرئيسية
+  const grid = $("#v-home .grid");
+  grid.insertAdjacentHTML("afterbegin", `<button class="tile" data-act="openAny"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7h6l2 2h10v10H3z"/></svg><strong>فتح أي ملف</strong><span>PDF، Word، Excel، PowerPoint، WPS، صور</span></button>`);
+  grid.insertAdjacentHTML("beforeend", `<button class="tile" data-act="securityMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><strong>التشفير والحماية</strong><span>كلمة مرور للملفات، أو إزالتها</span></button>`);
+  const note = $("#v-home > .note"); if (note) note.textContent = "كل شيء يعمل داخل هاتفك: لا حساب، ولا اشتراك، ولا ترسل ملفاتك إلى أي خادم.";
+  $("#diag label[for=fTest]")?.remove(); $("#fTest")?.remove(); $("#diagFile")?.remove();
+  // PDF
+  $("#bSave")?.insertAdjacentHTML("afterend", '<button class="btn" data-act="sharePdf">مشاركة</button>');
+  TOOLS.push(["pdfLockCur", "حماية بكلمة مرور", "تشفير الملف AES-256"], ["sharePdf", "مشاركة", "واتساب، بريد، وغيرها"]);
+  // الماسح والباركود
+  $("#sc-doc .big")?.insertAdjacentHTML("beforebegin", '<button class="btn primary" data-act="smartScan" style="min-height:56px;justify-content:center;font-size:16px">✨ الماسح الذكي (قصّ وتحسين تلقائي)</button>');
+  $("#sc-bc .big")?.insertAdjacentHTML("beforebegin", '<button class="btn primary" data-act="bcLive" style="min-height:56px;justify-content:center;font-size:16px">📷 مسح مباشر بالكاميرا</button>');
+  const bcCamBtn = $('#sc-bc [data-act="bcCam"]'); if (bcCamBtn) { bcCamBtn.classList.remove("primary"); bcCamBtn.textContent = "📸 التقاط صورة"; }
+  grid.insertAdjacentHTML("beforeend", `<button class="tile" data-act="shareAppMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4M12 6v7M9 10l3 3 3-3"/></svg><strong>تثبيت على جهاز آخر</strong><span>هاتف ثانٍ أو تابلت: إرسال أو رمز QR</span></button>`);
+  Object.assign(ACTS, { openAny, securityMenu, sharePdf, smartScan, bcLive, pdfLockCur: () => pdfLockFlow(true),
+    shareAppMenu, doUpdate, hideUpdate: () => $("#updBanner")?.remove(), checkUpdateNow: () => checkUpdate(false) });
+  // التحقق التلقائي من التحديثات مرة يومياً
+  setTimeout(() => { let last = 0; try { last = +localStorage.getItem("nl_upd_check") || 0; } catch (e) {} if (Date.now() - last > 20 * 3600 * 1000) checkUpdate(true); }, 4000);
+})();
+
+/* ───────── البدء ───────── */
+(async function start() {
+  let t = "home"; try { t = localStorage.getItem("nl_tab") || "home"; } catch (e) {}
+  let saved = ""; try { saved = localStorage.getItem("nl_src") || ""; } catch (e) {}
+  if (saved) setSrc(saved, "آخر نص عملت عليه");
+  else { $("#srcText").value = "مرحباً، هذا نص تجريبي. اكتب أو الصق نصك هنا، أو استخرجه من صورة، ثم ترجمه أو استمع إليه.\nHello! This is a sample text you can translate or listen to."; }
+  $$("#scanSeg [data-m]").forEach(b => b.onclick = () => scanMode(b.dataset.m));
+  $$(".tb").forEach(t => { t.addEventListener("mousedown", e => e.preventDefault()); t.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") e.preventDefault(); }); });
+  officeShow("none"); renderScanPages();
+  showTab(t);
+  if (window.pdfjsLib && PDFDocument) {
+    try { await document.fonts?.ready; await loadBytes(await makeSample(), "ملف تجريبي.pdf", { sample: true }); } catch (e) { emptyPdf(); }
+  } else emptyPdf();
+  updateBars();
+  if (window.claude?.use) {
+    claude.use("downloads").then(d => { caps.downloads = d; });
+    claude.use("sample").then(async s => { caps.sample = s; if (s) { try { caps.images = (await s.limits()).images || null; } catch (e) {} } });
+  }
+  window.speechSynthesis?.getVoices();
+  diagRun();
+  if (window.Android) window.Android.ready();
+})();
+</script>
+</body></html>
