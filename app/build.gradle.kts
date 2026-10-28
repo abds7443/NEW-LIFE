@@ -11,8 +11,11 @@ android {
         applicationId = "com.newlife.mobile"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        // رقم الإصدار يزيد تلقائياً مع كل بناء على GitHub (يستخدمه التحديث التلقائي داخل التطبيق)
+        val run = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 0
+        versionCode = 100 + run
+        versionName = "1.0.$run"
+        resValue("string", "update_repo", System.getenv("GITHUB_REPOSITORY") ?: "abds7443/NEW-LIFE")
         // معالجات الهواتف الحديثة فقط (يصغّر حجم APK)
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
