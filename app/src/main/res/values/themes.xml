@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.NewLife" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/nl_green</item>
+        <item name="android:statusBarColor">@color/nl_green_dark</item>
+        <item name="android:navigationBarColor">@color/nl_green_dark</item>
+        <item name="android:windowBackground">@color/nl_bg</item>
+    </style>
+    <style name="Theme.NewLife.Camera" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:windowBackground">#000000</item>
+    </style>
+</resources>
