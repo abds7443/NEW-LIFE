@@ -198,6 +198,25 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .kv span{color:var(--muted)}
 .big{display:flex;gap:10px}
 .big .btn{flex:1;min-height:56px;justify-content:center;font-size:16px}
+/* التابلت والشاشات العريضة */
+@media (min-width: 720px) {
+  main > section.view { max-width: 1120px; margin-inline: auto; width: 100%; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .tile { min-height: 120px; padding: 18px; }
+  h1 { font-size: 32px; }
+  nav.tabs { justify-content: center; }
+  nav.tabs button { flex: 0 1 150px; font-size: 13px; }
+  .scrim { align-items: center; }
+  .sheetdlg { max-width: 720px; border-radius: 18px; }
+  .floatbar > div { max-width: 760px; }
+  .paper { max-width: 860px; width: 100%; margin-inline: auto; padding: 48px 56px; }
+  #v-text:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+  #v-text textarea { min-height: 52vh; }
+  .scanpgs { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .slides { max-width: 900px; margin-inline: auto; width: 100%; }
+}
+@media (min-width: 1100px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+
 </style>
 
 <header class="top gut">
@@ -2109,6 +2128,23 @@ async function bcLive() {
   catch (e) { if (e.message !== "cancel") toast(e.message); }
 }
 
+
+/* قراءة الباركود من صورة: محرك الهاتف (ML Kit) أولاً، ثم القارئ الاحتياطي */
+async function decodeBarcodes(c) {
+  try {
+    const tok = await putBlob(await toBlob(c, "image/jpeg", 0.95), "jpg");
+    const res = JSON.parse(await native("barcodeImage", [tok]));
+    if (res.length) return res;
+  } catch (e) { console.warn(e); }
+  const Z = await lib("zxing");
+  const hints = new Map(); hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  const reader = new Z.MultiFormatReader(); reader.setHints(hints);
+  const tryCanvas = cv => { try { const r = reader.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))); return { text: r.getText(), format: ZX_NAMES[r.getBarcodeFormat()] || "باركود" }; } catch (e) { return null; } finally { reader.reset(); } };
+  const scaled = s => { const k = s / Math.max(c.width, c.height); if (k >= 1) return c; const o = document.createElement("canvas"); o.width = Math.round(c.width * k); o.height = Math.round(c.height * k); o.getContext("2d").drawImage(c, 0, 0, o.width, o.height); return o; };
+  for (const cand of [scaled(1400), scaled(900), rot90(scaled(1400)), scaled(2400)]) { await tick(); const r = tryCanvas(cand); if (r) return [r]; }
+  return [];
+}
+
 /* ───────── التشفير والحماية ───────── */
 async function pdfLockFlow(useCurrent) {
   let bytes, name;
@@ -2171,6 +2207,75 @@ async function securityMenu() {
   if (a === "dec") decryptFlow();
 }
 
+
+/* ───────── التحديث التلقائي ومشاركة التطبيق مع جهاز آخر ───────── */
+function appInfo() { try { return JSON.parse(NL.appInfo()); } catch (e) { return { code: 0, name: "?", repo: "" }; } }
+let nlUpdating = false;
+window.NL_updateProgress = p => { if (nlUpdating) busy(`جاري تنزيل التحديث ${p}%`); };
+async function checkUpdate(silent) {
+  try {
+    if (!silent) busy("جاري التحقق من التحديثات...");
+    const u = JSON.parse(await native("checkUpdate"));
+    busy();
+    try { localStorage.setItem("nl_upd_check", String(Date.now())); } catch (e) {}
+    showUpdateBanner(u.available ? u : null);
+    if (!silent) toast(u.available ? `يوجد إصدار جديد ${u.tag}` : `لديك أحدث إصدار (${u.currentName})`);
+    return u;
+  } catch (e) { busy(); if (!silent) toast("تعذر التحقق: " + e.message); return null; }
+}
+function showUpdateBanner(u) {
+  $("#updBanner")?.remove(); if (!u) return;
+  const mb = u.size ? ` · ${(u.size / 1048576).toFixed(0)} ميجابايت` : "";
+  $("#v-home").insertAdjacentHTML("afterbegin", `<div class="pane" id="updBanner" style="border-color:var(--accent)">
+    <header><h2>تحديث جديد متاح</h2><span class="tag"></span></header>
+    <p class="lead" style="margin:0">ثبّته الآن ليحصل التطبيق على آخر التحسينات. لن تُحذف ملفاتك أو توقيعاتك المحفوظة.</p>
+    <div class="row"><button class="btn primary" data-act="doUpdate">تحديث الآن</button><button class="btn" data-act="hideUpdate">لاحقاً</button></div></div>`);
+  $("#updBanner .tag").textContent = u.tag + mb;
+  $("#updBanner").dataset.url = u.url;
+}
+async function doUpdate() {
+  const url = $("#updBanner")?.dataset.url; if (!url) return checkUpdate(false);
+  busy("جاري تنزيل التحديث 0%"); nlUpdating = true;
+  try { await native("installUpdate", [url]); nlUpdating = false; busy(); toast("اضغط «تحديث» في نافذة أندرويد", 5000); }
+  catch (e) {
+    nlUpdating = false; busy();
+    if (e.message === "need_permission") {
+      await confirmSheet("خطوة لمرة واحدة", "فعّل «السماح من هذا المصدر» لتطبيق NEW LIFE في النافذة التي فُتحت، ثم ارجع واضغط «تحديث الآن» مرة أخرى.", "حسناً");
+    } else toast("تعذر التحديث: " + e.message);
+  }
+}
+function qrCanvas(text, px = 260) {
+  const Z = window.ZXing; const h = new Map(); h.set(Z.EncodeHintType.MARGIN, 2);
+  const m = new Z.QRCodeWriter().encode(text, Z.BarcodeFormat.QR_CODE, 0, 0, h);
+  const n = m.getWidth(), k = Math.floor(px / n); const c = document.createElement("canvas"); c.width = c.height = n * k;
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000";
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (m.get(x, y)) g.fillRect(x * k, y * k, k, k);
+  return c;
+}
+async function shareAppMenu() {
+  const info = appInfo(); const link = `https://github.com/${info.repo}/releases/latest`;
+  try { await lib("zxing"); } catch (e) {}
+  await sheet((b, close) => {
+    b.insertAdjacentHTML("beforeend", `<h2>تثبيت NEW LIFE على جهاز آخر</h2>
+      <div class="toolgrid"><button data-k="send"><strong>إرسال التطبيق</strong><small>عبر واتساب أو Quick Share أو البلوتوث</small></button>
+      <button data-k="open"><strong>صفحة التنزيل</strong><small>فتح رابط آخر إصدار</small></button></div>
+      <p class="lead" style="margin:0">أو امسح هذا الرمز بكاميرا الهاتف الآخر أو التابلت لتنزيل آخر إصدار:</p>
+      <div id="qrBox" style="display:grid;place-items:center;background:#fff;border-radius:12px;padding:12px"></div>
+      <div class="row" style="justify-content:space-between"><code dir="ltr" style="font-size:12px;overflow-wrap:anywhere"></code><button class="btn" data-k="copy">نسخ الرابط</button></div>
+      <p class="note">الإصدار المثبت: ${esc(info.name)}. بعد تثبيته على الجهاز الآخر، يحدّث نفسه تلقائياً مثل هذا الجهاز.</p>
+      <div class="acts"><button class="btn" data-k="close">إغلاق</button></div>`);
+    b.querySelector("code").textContent = link;
+    try { $("#qrBox", b).append(qrCanvas(link)); } catch (e) { $("#qrBox", b).textContent = "تعذر إنشاء الرمز"; }
+    b.querySelectorAll("[data-k]").forEach(x => x.onclick = () => {
+      const k = x.dataset.k;
+      if (k === "send") NL.shareApp();
+      if (k === "open") NL.openUrl(link);
+      if (k === "copy") copyText(link);
+      if (k === "close") close(null);
+    });
+  });
+}
+
 /* ───────── زر الرجوع في الهاتف ───────── */
 window.NL_back = () => {
   if (busyEl) return true;
@@ -2188,7 +2293,8 @@ function diagRun() {
     ok(window.pdfjsLib && window.PDFLib, "أدوات PDF جاهزة", "لم تُحمَّل أدوات PDF") +
     ok(window.JSZip, "أدوات Word وExcel جاهزة", "لم تُحمَّل أدوات المستندات") +
     ok(NL, "متصل بقدرات الهاتف: الحفظ، الكاميرا، قراءة النصوص، الترجمة، التشفير", "يعمل خارج التطبيق") +
-    '<div>ℹ️ لا يحتاج حساباً ولا اشتراكاً. الترجمة تحتاج إنترنت أول مرة فقط لتنزيل ملف كل لغة.</div>';
+    '<div>ℹ️ لا يحتاج حساباً ولا اشتراكاً. الترجمة تحتاج إنترنت أول مرة فقط لتنزيل ملف كل لغة.</div>' +
+    (NL ? `<div>📦 الإصدار المثبت: ${esc(appInfo().name)} <button class="btn" data-act="checkUpdateNow" style="margin-inline-start:8px">التحقق من التحديثات</button></div>` : "");
 }
 
 /* ───────── إضافات الواجهة ───────── */
@@ -2208,7 +2314,11 @@ function diagRun() {
   $("#sc-doc .big")?.insertAdjacentHTML("beforebegin", '<button class="btn primary" data-act="smartScan" style="min-height:56px;justify-content:center;font-size:16px">✨ الماسح الذكي (قصّ وتحسين تلقائي)</button>');
   $("#sc-bc .big")?.insertAdjacentHTML("beforebegin", '<button class="btn primary" data-act="bcLive" style="min-height:56px;justify-content:center;font-size:16px">📷 مسح مباشر بالكاميرا</button>');
   const bcCamBtn = $('#sc-bc [data-act="bcCam"]'); if (bcCamBtn) { bcCamBtn.classList.remove("primary"); bcCamBtn.textContent = "📸 التقاط صورة"; }
-  Object.assign(ACTS, { openAny, securityMenu, sharePdf, smartScan, bcLive, pdfLockCur: () => pdfLockFlow(true) });
+  grid.insertAdjacentHTML("beforeend", `<button class="tile" data-act="shareAppMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4M12 6v7M9 10l3 3 3-3"/></svg><strong>تثبيت على جهاز آخر</strong><span>هاتف ثانٍ أو تابلت: إرسال أو رمز QR</span></button>`);
+  Object.assign(ACTS, { openAny, securityMenu, sharePdf, smartScan, bcLive, pdfLockCur: () => pdfLockFlow(true),
+    shareAppMenu, doUpdate, hideUpdate: () => $("#updBanner")?.remove(), checkUpdateNow: () => checkUpdate(false) });
+  // التحقق التلقائي من التحديثات مرة يومياً
+  setTimeout(() => { let last = 0; try { last = +localStorage.getItem("nl_upd_check") || 0; } catch (e) {} if (Date.now() - last > 20 * 3600 * 1000) checkUpdate(true); }, 4000);
 })();
 
 /* ───────── البدء ───────── */
