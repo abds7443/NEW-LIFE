@@ -331,10 +331,27 @@ class NativeBridge(private val act: MainActivity) {
 
     @JavascriptInterface
     fun barcodeImage(token: String, cb: String) = run(cb) {
-        val bmp = loadBitmap(token, 2000)
         val scanner = BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS).build())
-        val list = scanner.process(InputImage.fromBitmap(bmp, 0)).await()
-        BarcodeActivity.toJson(list).toString()
+        try {
+            val big = loadBitmap(token, 3000)
+            // عدة محاولات: الصورة كاملة، ثم وسطها مكبّراً (للرموز الصغيرة)، ثم نسخة أصغر (للرموز الكبيرة جداً)
+            val tries = mutableListOf(big)
+            val cw = (big.width * 0.6).toInt()
+            val ch = (big.height * 0.6).toInt()
+            if (cw > 50 && ch > 50) tries.add(Bitmap.createBitmap(big, (big.width - cw) / 2, (big.height - ch) / 2, cw, ch))
+            if (maxOf(big.width, big.height) > 1200) {
+                val k = 1000f / maxOf(big.width, big.height)
+                tries.add(Bitmap.createScaledBitmap(big, (big.width * k).toInt(), (big.height * k).toInt(), true))
+            }
+            var result = JSONArray()
+            for (b in tries) {
+                result = BarcodeActivity.toJson(scanner.process(InputImage.fromBitmap(b, 0)).await())
+                if (result.length() > 0) break
+            }
+            result.toString()
+        } finally {
+            scanner.close()
+        }
     }
 
     // ───────── حماية ملفات PDF بكلمة مرور ─────────
@@ -375,6 +392,44 @@ class NativeBridge(private val act: MainActivity) {
             val out = Blobs.create("pdf")
             d.save(Blobs.file(out))
             Blobs.url(out)
+        }
+    }
+
+    // ───────── التحديث التلقائي ومشاركة التطبيق ─────────
+    @JavascriptInterface
+    fun appInfo(): String = JSONObject()
+        .put("code", Updater.currentCode(act)).put("name", Updater.currentName(act)).put("repo", Updater.repo(act)).toString()
+
+    @JavascriptInterface
+    fun checkUpdate(cb: String) = run(cb) { Updater.check(act).toString() }
+
+    @JavascriptInterface
+    fun installUpdate(url: String, cb: String) {
+        if (!Updater.canInstall(act)) {
+            act.runOnUiThread { Updater.openInstallPermission(act) }
+            act.reply(cb, false, "need_permission")
+            return
+        }
+        run(cb) {
+            val apk = Updater.download(act, url) { p ->
+                act.runOnUiThread { act.web.evaluateJavascript("window.NL_updateProgress && window.NL_updateProgress($p)", null) }
+            }
+            act.runOnUiThread { Updater.install(act, apk) }
+            "ok"
+        }
+    }
+
+    @JavascriptInterface
+    fun shareApp() {
+        act.runOnUiThread {
+            try { Updater.shareApp(act) } catch (e: Exception) { act.toast("تعذرت المشاركة: ${e.message}") }
+        }
+    }
+
+    @JavascriptInterface
+    fun openUrl(url: String) {
+        act.runOnUiThread {
+            try { act.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))) } catch (_: Exception) { act.toast("لا يوجد متصفح") }
         }
     }
 

@@ -7,8 +7,11 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.net.Uri
 import android.os.Bundle
+import android.util.Size
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
@@ -19,8 +22,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
@@ -74,12 +80,29 @@ class BarcodeActivity : AppCompatActivity() {
     private var scanner: BarcodeScanner? = null
     private var camera: Camera? = null
     private var torch = false
+    private var zoomed = false
     @Volatile private var done = false
 
     private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) startCamera() else {
             Toast.makeText(this, "يلزم السماح باستخدام الكاميرا", Toast.LENGTH_LONG).show()
             finish()
+        }
+    }
+
+    // قراءة الباركود من صورة في المعرض
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val sc = scanner ?: BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS).build())
+        try {
+            sc.process(InputImage.fromFilePath(this, uri))
+                .addOnSuccessListener { list ->
+                    if (list.isNotEmpty()) { done = true; finishWith(list) }
+                    else Toast.makeText(this, "لم يُعثر على باركود في الصورة", Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener { e -> Toast.makeText(this, "تعذرت القراءة: ${e.message}", Toast.LENGTH_LONG).show() }
+        } catch (e: Exception) {
+            Toast.makeText(this, "تعذر فتح الصورة", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -120,8 +143,28 @@ class BarcodeActivity : AppCompatActivity() {
                 camera?.cameraControl?.enableTorch(torch)
             }
         }
+        val zoom = Button(this).apply {
+            text = "تكبير"
+            setOnClickListener {
+                zoomed = !zoomed
+                camera?.cameraControl?.setLinearZoom(if (zoomed) 0.45f else 0f)
+                text = if (zoomed) "تصغير" else "تكبير"
+            }
+        }
+        val gallery = Button(this).apply { text = "من صورة"; setOnClickListener { pickImage.launch("image/*") } }
         bar.addView(light)
+        bar.addView(zoom)
+        bar.addView(gallery)
         bar.addView(close)
+        // النقر على الشاشة يضبط التركيز على ذلك المكان
+        preview.setOnTouchListener { v, e ->
+            if (e.action == MotionEvent.ACTION_UP) {
+                val point = preview.meteringPointFactory.createPoint(e.x, e.y)
+                camera?.cameraControl?.startFocusAndMetering(FocusMeteringAction.Builder(point).build())
+                v.performClick()
+            }
+            true
+        }
         root.addView(bar, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
             Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply { bottomMargin = 90 })
         setContentView(root)
@@ -138,7 +181,12 @@ class BarcodeActivity : AppCompatActivity() {
             try {
                 val provider = future.get()
                 val pv = Preview.Builder().build().also { it.setSurfaceProvider(preview.surfaceProvider) }
+                // دقة أعلى من الافتراضي (640×480) حتى تُقرأ الرموز الصغيرة والكثيفة
+                val resolution = ResolutionSelector.Builder()
+                    .setResolutionStrategy(ResolutionStrategy(Size(1920, 1080), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                    .build()
                 val analysis = ImageAnalysis.Builder()
+                    .setResolutionSelector(resolution)
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
                 analysis.setAnalyzer(executor) { proxy ->
