@@ -447,4 +447,32 @@ class NativeBridge(private val act: MainActivity) {
         val out = Blobs.fromBytes(data, Blobs.ext(name))
         JSONObject().put("url", Blobs.url(out)).put("name", name).toString()
     }
+
+    // ───────── نص الحافظة (زر «لصق» في المحرر) ─────────
+    @JavascriptInterface
+    fun clipText(cb: String) {
+        act.runOnUiThread {
+            try {
+                val cm = act.getSystemService(android.content.ClipboardManager::class.java)
+                val t = cm?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(act)?.toString() ?: ""
+                act.reply(cb, true, t)
+            } catch (e: Exception) {
+                act.reply(cb, false, e.message ?: "تعذر قراءة الحافظة")
+            }
+        }
+    }
+
+    // ───────── ملفات Office المحمية بكلمة مرور (docx / xlsx / pptx) ─────────
+    @JavascriptInterface
+    fun officeDecrypt(infoToken: String, pkgToken: String, password: String, ext: String, cb: String) = run(cb) {
+        val zip = OfficeCrypto.decrypt(Blobs.file(infoToken).readBytes(), Blobs.file(pkgToken).readBytes(), password)
+        Blobs.url(Blobs.fromBytes(zip, Blobs.ext(".$ext")))
+    }
+
+    @JavascriptInterface
+    fun officeEncrypt(token: String, password: String, cb: String) = run(cb) {
+        val (info, pkg) = OfficeCrypto.encrypt(Blobs.file(token).readBytes(), password)
+        JSONObject().put("info", Blobs.url(Blobs.fromBytes(info, "bin")))
+            .put("pkg", Blobs.url(Blobs.fromBytes(pkg, "bin"))).toString()
+    }
 }
