@@ -138,8 +138,14 @@ class MainActivity : AppCompatActivity() {
         }
         web.addJavascriptInterface(bridge, "Android")
         web.webViewClient = object : WebViewClient() {
-            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-                assetLoader.shouldInterceptRequest(request.url)
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                val r = assetLoader.shouldInterceptRequest(request.url) ?: return null
+                // نوع الملف الصحيح لمحرك قراءة النصوص (WebAssembly) ونماذجه
+                val p = request.url.path ?: ""
+                if (p.endsWith(".wasm")) r.mimeType = "application/wasm"
+                else if (p.endsWith(".onnx")) r.mimeType = "application/octet-stream"
+                return r
+            }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val u = request.url
