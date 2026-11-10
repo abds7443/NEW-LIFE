@@ -57,6 +57,18 @@
                 <data android:mimeType="application/wps-office.pptx" />
                 <data android:mimeType="application/wps-office.pdf" />
                 <data android:mimeType="application/octet-stream" />
+                <!-- الملفات المضغوطة (مدير الأرشيف) -->
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+                <data android:mimeType="application/x-7z-compressed" />
+                <data android:mimeType="application/x-rar-compressed" />
+                <data android:mimeType="application/vnd.rar" />
+                <data android:mimeType="application/x-tar" />
+                <data android:mimeType="application/gzip" />
+                <data android:mimeType="application/x-gzip" />
+                <data android:mimeType="application/x-bzip2" />
+                <data android:mimeType="application/x-xz" />
+                <data android:mimeType="application/x-iso9660-image" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
