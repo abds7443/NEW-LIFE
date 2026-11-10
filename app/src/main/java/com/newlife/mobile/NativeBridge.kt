@@ -462,6 +462,19 @@ class NativeBridge(private val act: MainActivity) {
         }
     }
 
+    // ───────── المجلدات: فك ضغط أرشيف كامل إلى مجلد، حفظ عدة ملفات، ضغط مجلد كامل ─────────
+    @JavascriptInterface
+    fun folderOpen(sub: String, cb: String) = Folders.open(act, sub) { ok, p -> act.reply(cb, ok, p) }
+
+    @JavascriptInterface
+    fun folderWrite(id: String, relPath: String, token: String): String = Folders.write(act, id, relPath, token)
+
+    @JavascriptInterface
+    fun folderClose(id: String) = Folders.close(id)
+
+    @JavascriptInterface
+    fun pickFolder(cb: String) = Folders.pick(act) { ok, p -> act.reply(cb, ok, p) }
+
     // ───────── ملفات Office المحمية بكلمة مرور (docx / xlsx / pptx) ─────────
     @JavascriptInterface
     fun officeDecrypt(infoToken: String, pkgToken: String, password: String, ext: String, cb: String) = run(cb) {
